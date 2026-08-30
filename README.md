@@ -1,6 +1,7 @@
 # ⚡ OmniCast AI — Autonomous Multi-Platform Content Studio Agent
 
-> **Autonomous Multi-Agent Content Studio built with Google Antigravity & Gemini 3.7 Flash, deployed on Google Cloud Run.**
+> **Live Production URL:** [https://omnicast-ai-296127548041.us-central1.run.app](https://omnicast-ai-296127548041.us-central1.run.app)  
+> Built with **Google Antigravity & Gemini 3.7 Flash**, deployed on **Google Cloud Run**.
 
 ---
 
@@ -9,6 +10,13 @@
 Creating high-performing digital content today requires hours of fragmented effort across multiple platforms. Creators and marketing teams must research trending topics, formulate platform-specific strategies, calibrate tone, write custom video scripts, format LinkedIn posts, craft Twitter threads, draft WhatsApp announcements, format newsletters, and design visual carousels.
 
 **OmniCast AI** automates this entire production pipeline. With a **single prompt, target guideline, or URL**, an autonomous multi-agent swarm performs live internet research, constructs a unified campaign narrative, calibrates platform-fitting rules, and progressively generates tailored, publication-ready assets for every major distribution channel.
+
+---
+
+## 🌐 Live Web Demo
+
+You can access the live production instance here:  
+👉 **[https://omnicast-ai-296127548041.us-central1.run.app](https://omnicast-ai-296127548041.us-central1.run.app)**
 
 ---
 
