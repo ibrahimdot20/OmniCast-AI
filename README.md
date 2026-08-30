@@ -117,7 +117,7 @@ gcloud run deploy omnicast-ai \
   --platform managed \
   --region us-central1 \
   --allow-unauthenticated \
-  --set-env-vars GEMINI_MODEL="gemini-2.5-flash" \
+  --set-env-vars GEMINI_MODEL="gemini-3.7-flash" \
   --memory 1Gi \
   --cpu 1 \
   --timeout 300
@@ -130,6 +130,6 @@ gcloud run deploy omnicast-ai \
 | Hackathon Criterion | Weight | OmniCast AI Implementation | Status |
 | :--- | :---: | :--- | :---: |
 | **Agentic Workflow & Multi-Agent Swarm** | **40%** | Multi-agent pipeline: Research Agent (Live Web Search) $\rightarrow$ Planner Agent $\rightarrow$ Platform Adaptation Engine $\rightarrow$ 6 Specialized Platform Distribution Agents $\rightarrow$ Isolated Single-Card Refinement Agent. | ✅ **100% Complete** |
-| **Architectural Discipline & Google Stack** | **30%** | Built using **Google Antigravity SDK**, **Gemini 3.7 / 2.5 Flash**, **Google Cloud Run**, Server-Sent Events (SSE), and clean containerization. | ✅ **100% Complete** |
+| **Architectural Discipline & Google Stack** | **30%** | Built using **Google Antigravity SDK**, **Gemini 3.7 Flash**, **Google Cloud Run**, Server-Sent Events (SSE), and clean containerization. | ✅ **100% Complete** |
 | **Production Readiness & UI/UX** | **30%** | Visual interactive canvas, dynamic SVG port-to-port wire routing, centered detail inspection modal, inline editing, 1-click re-roll, and ZIP bundle export. | ✅ **100% Complete** |
 | **Security & Best Practices** | Mandatory | `.gitignore` protects all `.env` secrets, zero hardcoded API keys in Git, Dockerfile with non-root security. | ✅ **100% Complete** |
