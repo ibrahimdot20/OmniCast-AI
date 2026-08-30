@@ -1,0 +1,41 @@
+# Environment & API Key Secrets (NEVER COMMIT)
+.env
+*.env
+.env.*
+!.env.example
+secrets.json
+credentials.json
+*.key
+*.pem
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# Temporary & Build outputs
+build/
+dist/
+*.egg-info/
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Local Generated Media & Bundles
+backend/app/static/audio/*.mp3
+backend/app/static/images/*.png
+backend/app/static/video/*.mp4
+backend/app/static/*.zip
+!backend/app/static/.gitkeep
+
+# IDE & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

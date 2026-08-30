@@ -1,0 +1,229 @@
+/* OmniCast AI — Clean Minimalist Workflow Canvas */
+
+:root {
+  --canvas-bg: #f8fafc;
+  --canvas-dots: #cbd5e1;
+  --node-bg: #ffffff;
+  --node-border: #e2e8f0;
+  --node-border-active: #6366f1;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --node-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --node-shadow-hover: 0 12px 20px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+}
+
+.dark {
+  --canvas-bg: #090d16;
+  --canvas-dots: #1e293b;
+  --node-bg: #111827;
+  --node-border: #1f293d;
+  --node-border-active: #818cf8;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --node-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  --node-shadow-hover: 0 12px 20px -3px rgba(0, 0, 0, 0.6);
+}
+
+body {
+  background-color: var(--canvas-bg);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* Dot Matrix Background */
+.n8n-canvas-grid {
+  background-color: var(--canvas-bg);
+  background-image: radial-gradient(var(--canvas-dots) 1.3px, transparent 1.3px);
+  background-size: 24px 24px;
+}
+
+/* Node Card Base */
+.workflow-node {
+  background-color: var(--node-bg);
+  border: 1.5px solid var(--node-border);
+  box-shadow: var(--node-shadow);
+  border-radius: 1rem;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  position: relative;
+  user-select: none;
+}
+
+.workflow-node:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--node-shadow-hover);
+  border-color: var(--node-border-active);
+}
+
+/* Node States: Idle, Running, Completed */
+.workflow-node.state-idle {
+  opacity: 0.9;
+  border-color: var(--node-border);
+}
+
+.workflow-node.state-running {
+  opacity: 1;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.25), var(--node-shadow-hover);
+  transform: translateY(-2px) scale(1.02);
+}
+
+.workflow-node.state-completed {
+  opacity: 1;
+  border-color: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2), var(--node-shadow);
+}
+
+/* Port Connectors */
+.port-top {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #6366f1;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 6px rgba(99, 102, 241, 0.6);
+  z-index: 20;
+}
+
+.port-bottom {
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #10b981;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+  z-index: 20;
+}
+
+.dark .port-top, .dark .port-bottom {
+  border-color: #111827;
+}
+
+/* SVG Connection Lines & Animated Flow */
+.wire-path {
+  stroke: #cbd5e1;
+  stroke-width: 2.5;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 0.3s ease;
+}
+
+.dark .wire-path {
+  stroke: #334155;
+}
+
+.wire-path.active {
+  stroke: #6366f1;
+  stroke-dasharray: 6;
+  animation: wire-flow 0.8s linear infinite;
+}
+
+.wire-path.completed {
+  stroke: #10b981;
+  stroke-width: 2.5;
+}
+
+@keyframes wire-flow {
+  from { stroke-dashoffset: 20; }
+  to { stroke-dashoffset: 0; }
+}
+
+/* Brand Badges */
+.badge-linkedin { background-color: #0a66c2; color: #ffffff; }
+.badge-twitter { background-color: #000000; color: #ffffff; }
+.badge-whatsapp { background-color: #25d366; color: #ffffff; }
+.badge-newsletter { background-color: #7c3aed; color: #ffffff; }
+.badge-facebook { background-color: #1877f2; color: #ffffff; }
+.badge-instagram { background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); color: #ffffff; }
+.badge-research { background-color: #059669; color: #ffffff; }
+.badge-plan { background-color: #4f46e5; color: #ffffff; }
+.badge-fitting { background-color: #0284c7; color: #ffffff; }
+
+/* 6 Platform Nodes Grid Layout */
+.stage3-nodes-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 1rem;
+  width: 100%;
+}
+
+@media (max-width: 1200px) {
+  .stage3-nodes-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .stage3-nodes-grid {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+}
+
+/* Centered Modal Backdrop */
+.modal-backdrop {
+  background-color: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+}
+
+/* Tight Clean Prose Typography inside Modal */
+.prose-tight h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-top: 1rem;
+  margin-bottom: 0.35rem;
+  color: inherit;
+}
+
+.prose-tight h3 {
+  font-size: 0.875rem;
+  font-weight: 700;
+  margin-top: 0.75rem;
+  margin-bottom: 0.25rem;
+  color: inherit;
+}
+
+.prose-tight p {
+  margin-top: 0.35rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.55;
+}
+
+.prose-tight hr {
+  margin: 0.75rem 0;
+  border-color: rgba(203, 213, 225, 0.5);
+}
+
+.dark .prose-tight hr {
+  border-color: rgba(51, 65, 85, 0.6);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
