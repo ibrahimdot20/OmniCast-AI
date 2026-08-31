@@ -37,7 +37,8 @@ def call_gemini(prompt: str, system_instruction: Optional[str] = None, json_mode
     2. Direct REST API to gemini-flash-lite-latest / gemini-3.6-flash
     3. Dynamic Bespoke Intelligence Fallback
     """
-    api_key = GEMINI_API_KEY or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    raw_key = GEMINI_API_KEY or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or ""
+    api_key = raw_key.strip().split()[0] if raw_key else ""
     
     if api_key:
         models = ["gemini-3.5-flash-lite", "gemini-3.6-flash"]
@@ -60,8 +61,10 @@ def call_gemini(prompt: str, system_instruction: Optional[str] = None, json_mode
                             text = parts[0].get("text", "")
                             if text and text.strip():
                                 return text.strip()
+                else:
+                    logger.warning(f"REST API {m} HTTP {resp.status_code}: {resp.text[:150]}")
             except Exception as r_err:
-                logger.debug(f"REST API {m} note: {r_err}")
+                logger.warning(f"REST API {m} error: {r_err}")
 
     # Fallback to Bespoke Intelligence Generator
     return get_simulated_response(prompt, system_instruction, json_mode)
