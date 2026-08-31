@@ -221,6 +221,16 @@ async function startCampaign() {
   initNodesState();
   document.getElementById('downloadBundleBtn').classList.add('hidden');
 
+  const activityBar = document.getElementById('liveActivityBar');
+  const activityMsg = document.getElementById('liveActivityMessage');
+  const agentBadge = document.getElementById('activeAgentBadge');
+  if (activityBar) activityBar.classList.remove('hidden');
+  if (activityMsg) activityMsg.innerText = '🚀 Launching autonomous multi-agent swarm...';
+  if (agentBadge) {
+    agentBadge.innerText = 'SWARM ACTIVE';
+    agentBadge.className = 'flex-shrink-0 text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-300 font-mono';
+  }
+
   setNodeState('research', 'running');
 
   const goBtn = document.getElementById('goBtn');
@@ -319,6 +329,11 @@ function handlePipelineEvent(type, data) {
   if (type === 'status') {
     if (data.campaign_id) currentCampaign.id = data.campaign_id;
 
+    const activityMsg = document.getElementById('liveActivityMessage');
+    const agentBadge = document.getElementById('activeAgentBadge');
+    if (activityMsg && data.message) activityMsg.innerText = data.message;
+    if (agentBadge && data.agent) agentBadge.innerText = data.agent.toUpperCase();
+
     if (data.stage === 'researching') {
       setNodeState('research', 'running');
     } else if (data.stage === 'planning') {
@@ -362,6 +377,14 @@ function completeWorkflow() {
   setWireCompleted('wire_fitting_trunk');
   setWireCompleted('wire_bus_bar');
   PLATFORM_NODES.forEach(p => setWireCompleted(`wire_branch_${p}`));
+
+  const activityMsg = document.getElementById('liveActivityMessage');
+  const agentBadge = document.getElementById('activeAgentBadge');
+  if (activityMsg) activityMsg.innerText = '✨ Swarm completed all 9 workflow nodes!';
+  if (agentBadge) {
+    agentBadge.innerText = '100% COMPLETE';
+    agentBadge.className = 'flex-shrink-0 text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 font-mono';
+  }
 
   document.getElementById('downloadBundleBtn').classList.remove('hidden');
   document.getElementById('downloadBundleBtn').classList.add('flex');
