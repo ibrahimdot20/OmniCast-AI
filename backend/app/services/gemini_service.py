@@ -9,7 +9,7 @@ logger = logging.getLogger("omnicast.gemini")
 
 def call_gemini(prompt: str, system_instruction: Optional[str] = None, json_mode: bool = False) -> str:
     """
-    Executes a prompt using Google GenAI SDK with Gemini 3.7 Flash.
+    Executes a prompt using Google GenAI SDK with Gemini 3.7 / 3.6 Flash.
     Includes smart model aliases fallback and dynamic generation.
     """
     api_key = GEMINI_API_KEY or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
@@ -30,11 +30,11 @@ def call_gemini(prompt: str, system_instruction: Optional[str] = None, json_mode
             response_mime_type="application/json" if json_mode else "text/plain"
         )
         
-        # Primary model attempt: gemini-3.7-flash
+        # Primary models to try
         models_to_try = [
-            MODEL_NAME or "gemini-3.7-flash",
-            "gemini-2.0-flash",
-            "gemini-1.5-flash"
+            MODEL_NAME or "gemini-3.6-flash",
+            "gemini-3.6-flash",
+            "gemini-3.7-flash"
         ]
         
         last_error = None
