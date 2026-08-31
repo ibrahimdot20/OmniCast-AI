@@ -2,20 +2,18 @@
 
 :root {
   --canvas-bg: #f8fafc;
-  --canvas-dots: #cbd5e1;
   --node-bg: #ffffff;
   --node-border: #e2e8f0;
   --node-border-active: #6366f1;
   --text-primary: #0f172a;
   --text-secondary: #475569;
   --text-muted: #94a3b8;
-  --node-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-  --node-shadow-hover: 0 12px 20px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  --node-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
+  --node-shadow-hover: 0 14px 24px -4px rgba(99, 102, 241, 0.12), 0 4px 8px -2px rgba(0, 0, 0, 0.04);
 }
 
 .dark {
-  --canvas-bg: #090d16;
-  --canvas-dots: #1e293b;
+  --canvas-bg: #0b0f19;
   --node-bg: #111827;
   --node-border: #1f293d;
   --node-border-active: #818cf8;
@@ -23,7 +21,7 @@
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
   --node-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
-  --node-shadow-hover: 0 12px 20px -3px rgba(0, 0, 0, 0.6);
+  --node-shadow-hover: 0 14px 26px -4px rgba(99, 102, 241, 0.25), 0 4px 8px -2px rgba(0, 0, 0, 0.5);
 }
 
 body {
@@ -35,11 +33,15 @@ body {
   overflow-x: hidden;
 }
 
-/* Dot Matrix Background */
-.n8n-canvas-grid {
+/* Sleek Modern Studio Canvas (No distracting dots) */
+.studio-canvas {
   background-color: var(--canvas-bg);
-  background-image: radial-gradient(var(--canvas-dots) 1.3px, transparent 1.3px);
-  background-size: 24px 24px;
+  background-image: linear-gradient(to bottom, rgba(241, 245, 249, 0.5), transparent);
+}
+
+.dark .studio-canvas {
+  background-color: var(--canvas-bg);
+  background-image: radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.08) 0%, transparent 60%);
 }
 
 /* Node Card Base */
@@ -174,10 +176,17 @@ body {
   }
 }
 
-/* Centered Modal Backdrop */
+/* Centered Modal Backdrop & Scroll Containment */
 .modal-backdrop {
   background-color: rgba(15, 23, 42, 0.55);
   backdrop-filter: blur(4px);
+}
+
+#nodeDetailModal,
+#historyDrawer,
+#modalContentView,
+#historyListContainer {
+  overscroll-behavior: contain;
 }
 
 /* Tight Clean Prose Typography inside Modal */

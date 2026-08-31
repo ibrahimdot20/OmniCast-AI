@@ -1,12 +1,107 @@
-/**
- * OmniCast AI — Dynamic Precision Flowchart Studio Controller
- * Centered clean modal popup with tight, uncluttered content presentation.
- */
+// =========================================================================
+// OMNICAST AI — FRONTEND APPLICATION CONTROLLER (v7.0)
+// Complete 11-Node Swarm, Directive-Driven Images & Video, History Persistence
+// =========================================================================
 
-// Global State
+const VISIBLE_PLATFORMS = [
+  'research',
+  'plan',
+  'platform_fitting',
+  'linkedin',
+  'twitter',
+  'whatsapp',
+  'newsletter',
+  'facebook',
+  'instagram',
+  'images',
+  'video'
+];
+
+const PLATFORMS_CONFIG = {
+  research: {
+    title: 'Deep Research Dossier',
+    icon: 'fa-solid fa-magnifying-glass',
+    badgeClass: 'badge-research',
+    accentColor: '#3b82f6',
+    subtitle: 'Intelligence & Live Crawl'
+  },
+  plan: {
+    title: 'Strategic Campaign Plan',
+    icon: 'fa-solid fa-brain',
+    badgeClass: 'badge-plan',
+    accentColor: '#8b5cf6',
+    subtitle: 'Narrative Strategy & Persona'
+  },
+  platform_fitting: {
+    title: 'Platform Adaptation Matrix',
+    icon: 'fa-solid fa-arrows-split-up-and-left',
+    badgeClass: 'badge-fitting',
+    accentColor: '#10b981',
+    subtitle: 'Cross-Platform Calibrations'
+  },
+  linkedin: {
+    title: 'LinkedIn Post',
+    icon: 'fa-brands fa-linkedin-in',
+    badgeClass: 'badge-linkedin',
+    accentColor: '#0a66c2',
+    subtitle: 'Executive Thought Leadership'
+  },
+  twitter: {
+    title: 'X / Twitter Thread',
+    icon: 'fa-brands fa-x-twitter',
+    badgeClass: 'badge-twitter',
+    accentColor: '#0f1419',
+    subtitle: '7-Tweet Viral Thread'
+  },
+  whatsapp: {
+    title: 'WhatsApp Broadcast',
+    icon: 'fa-brands fa-whatsapp',
+    badgeClass: 'badge-whatsapp',
+    accentColor: '#25d366',
+    subtitle: 'Community Direct Broadcast'
+  },
+  newsletter: {
+    title: 'Email Newsletter',
+    icon: 'fa-regular fa-envelope',
+    badgeClass: 'badge-newsletter',
+    accentColor: '#a855f7',
+    subtitle: 'Substack / Morning Brew Editorial'
+  },
+  facebook: {
+    title: 'Facebook Post',
+    icon: 'fa-brands fa-facebook-f',
+    badgeClass: 'badge-facebook',
+    accentColor: '#1877f2',
+    subtitle: 'Community Story & Discussion'
+  },
+  instagram: {
+    title: 'Instagram Carousel',
+    icon: 'fa-brands fa-instagram',
+    badgeClass: 'badge-instagram',
+    accentColor: '#e1306c',
+    subtitle: '5-Slide Carousel & Caption'
+  },
+  images: {
+    title: 'AI Images Studio',
+    icon: 'fa-solid fa-images',
+    badgeClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+    accentColor: '#f59e0b',
+    subtitle: 'Directive-Driven Visual Suite'
+  },
+  video: {
+    title: 'AI Video Studio',
+    icon: 'fa-solid fa-film',
+    badgeClass: 'bg-rose-500/10 text-rose-600 dark:text-rose-400',
+    accentColor: '#f43f5e',
+    subtitle: '20-Second Dynamic MP4'
+  }
+};
+
 let currentCampaign = {
   id: null,
+  timestamp: null,
   prompt: '',
+  tone: '',
   cards: {},
   research: null,
   plan: null,
@@ -14,167 +109,232 @@ let currentCampaign = {
 };
 
 let activeModalPlatform = null;
+let isEditMode = false;
 
-const VISIBLE_PLATFORMS = [
-  'research', 'plan', 'platform_fitting',
-  'linkedin', 'twitter', 'whatsapp', 'newsletter', 'facebook', 'instagram'
-];
-
-const PLATFORM_NODES = [
-  'linkedin', 'twitter', 'whatsapp',
-  'newsletter', 'facebook', 'instagram'
-];
-
+// ----------------------------------------------------
+// INITIALIZATION
+// ----------------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
   initNodesState();
-
-  setTimeout(redrawWires, 50);
+  loadHistory();
   window.addEventListener('resize', redrawWires);
-
-  // Close modal on Escape key
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      closeDetailModal();
-    }
-  });
-
-  const promptInput = document.getElementById('promptInput');
-  if (promptInput) {
-    promptInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-        e.preventDefault();
-        startCampaign();
-      }
-    });
-  }
+  setTimeout(redrawWires, 200);
 });
 
-// ----------------------------------------------------
-// THEME MANAGEMENT
-// ----------------------------------------------------
 function initTheme() {
-  const savedTheme = localStorage.getItem('omnicast_theme') || 'light';
-  if (savedTheme === 'dark') {
+  const isDark = localStorage.getItem('omnicast_theme') === 'dark' || 
+    (!('omnicast_theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  if (isDark) {
     document.documentElement.classList.add('dark');
-    const icon = document.getElementById('themeIcon');
-    if (icon) icon.className = 'fa-solid fa-sun';
+    document.getElementById('themeIcon').className = 'fa-solid fa-sun';
   } else {
     document.documentElement.classList.remove('dark');
-    const icon = document.getElementById('themeIcon');
-    if (icon) icon.className = 'fa-solid fa-moon';
+    document.getElementById('themeIcon').className = 'fa-solid fa-moon';
   }
 }
 
 function toggleTheme() {
   const isDark = document.documentElement.classList.toggle('dark');
   localStorage.setItem('omnicast_theme', isDark ? 'dark' : 'light');
-  const icon = document.getElementById('themeIcon');
-  if (icon) icon.className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
-  redrawWires();
+  document.getElementById('themeIcon').className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+  setTimeout(redrawWires, 100);
 }
 
 // ----------------------------------------------------
-// DYNAMIC SVG WIRE RENDERING (PIXEL PERFECT CENTERING)
+// SVG CONNECTOR WIRING ENGINE (11 Nodes)
 // ----------------------------------------------------
-function redrawWires() {
+function getPortCenter(elemId, portClass) {
+  const elem = document.getElementById(elemId);
+  if (!elem) return null;
   const container = document.getElementById('workflowContainer');
-  const svg = document.getElementById('workflowSvgLayer');
-  if (!container || !svg) return;
+  const cRect = container.getBoundingClientRect();
+  const port = elem.querySelector(`.${portClass}`);
+  if (port) {
+    const pRect = port.getBoundingClientRect();
+    return {
+      x: pRect.left - cRect.left + pRect.width / 2,
+      y: pRect.top - cRect.top + pRect.height / 2
+    };
+  }
+  const eRect = elem.getBoundingClientRect();
+  if (portClass === 'port-bottom') {
+    return { x: eRect.left - cRect.left + eRect.width / 2, y: eRect.bottom - cRect.top };
+  }
+  return { x: eRect.left - cRect.left + eRect.width / 2, y: eRect.top - cRect.top };
+}
 
+function redrawWires() {
+  const svg = document.getElementById('workflowSvgLayer');
+  const container = document.getElementById('workflowContainer');
+  if (!svg || !container) return;
+  svg.innerHTML = '';
   const cRect = container.getBoundingClientRect();
 
-  const getPortCenter = (selector) => {
-    const el = document.querySelector(selector);
-    if (!el) return null;
-    const r = el.getBoundingClientRect();
-    return {
-      x: r.left + r.width / 2 - cRect.left,
-      y: r.top + r.height / 2 - cRect.top
-    };
-  };
+  const researchBottom = getPortCenter('node_research', 'port-bottom');
+  const planTop = getPortCenter('node_plan', 'port-top');
+  const planBottom = getPortCenter('node_plan', 'port-bottom');
+  const fittingTop = getPortCenter('node_platform_fitting', 'port-top');
+  const fittingBottom = getPortCenter('node_platform_fitting', 'port-bottom');
 
-  const resBot = getPortCenter('#node_research .port-bottom');
-  const planTop = getPortCenter('#node_plan .port-top');
-  const planBot = getPortCenter('#node_plan .port-bottom');
-  const fitTop = getPortCenter('#node_platform_fitting .port-top');
-  const fitBot = getPortCenter('#node_platform_fitting .port-bottom');
+  // Wire 1: Research -> Plan
+  if (researchBottom && planTop) {
+    const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line1.id = 'wire_research_plan';
+    line1.setAttribute('x1', researchBottom.x);
+    line1.setAttribute('y1', researchBottom.y);
+    line1.setAttribute('x2', planTop.x);
+    line1.setAttribute('y2', planTop.y);
+    line1.setAttribute('class', currentCampaign.cards['plan'] ? 'wire-path completed' : 'wire-path');
+    svg.appendChild(line1);
+  }
 
-  if (!resBot || !planTop || !planBot || !fitTop || !fitBot) return;
+  // Wire 2: Plan -> Platform Fitting
+  if (planBottom && fittingTop) {
+    const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line2.id = 'wire_plan_fitting';
+    line2.setAttribute('x1', planBottom.x);
+    line2.setAttribute('y1', planBottom.y);
+    line2.setAttribute('x2', fittingTop.x);
+    line2.setAttribute('y2', fittingTop.y);
+    line2.setAttribute('class', currentCampaign.cards['platform_fitting'] ? 'wire-path completed' : 'wire-path');
+    svg.appendChild(line2);
+  }
 
-  const platformPorts = PLATFORM_NODES.map(p => ({
-    platform: p,
-    pos: getPortCenter(`#node_${p} .port-top`)
-  })).filter(item => item.pos !== null);
+  if (!fittingBottom) return;
 
-  if (platformPorts.length === 0) return;
+  // Wire 3: Platform Fitting -> 6 Platform Nodes UPPER Bus Bar
+  const distributionPlatforms = ['linkedin', 'twitter', 'whatsapp', 'newsletter', 'facebook', 'instagram'];
+  const platformTopPorts = distributionPlatforms
+    .map(p => ({ platform: p, pos: getPortCenter(`node_${p}`, 'port-top') }))
+    .filter(item => item.pos !== null);
 
-  svg.innerHTML = '';
+  const platformBottomPorts = distributionPlatforms
+    .map(p => ({ platform: p, pos: getPortCenter(`node_${p}`, 'port-bottom') }))
+    .filter(item => item.pos !== null);
 
-  // 1. Line: Research Bottom -> Plan Top
-  const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-  line1.id = 'wire_research_to_plan';
-  line1.setAttribute('x1', resBot.x);
-  line1.setAttribute('y1', resBot.y);
-  line1.setAttribute('x2', planTop.x);
-  line1.setAttribute('y2', planTop.y);
-  line1.setAttribute('class', currentCampaign.cards['research'] ? 'wire-path completed' : 'wire-path');
-  svg.appendChild(line1);
+  const mediaPorts = ['images', 'video']
+    .map(p => ({ platform: p, pos: getPortCenter(`node_${p}`, 'port-top') }))
+    .filter(item => item.pos !== null);
 
-  // 2. Line: Plan Bottom -> Platform Fitting Top
-  const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-  line2.id = 'wire_plan_to_fitting';
-  line2.setAttribute('x1', planBot.x);
-  line2.setAttribute('y1', planBot.y);
-  line2.setAttribute('x2', fitTop.x);
-  line2.setAttribute('y2', fitTop.y);
-  line2.setAttribute('class', currentCampaign.cards['plan'] ? 'wire-path completed' : 'wire-path');
-  svg.appendChild(line2);
+  if (platformTopPorts.length > 0) {
+    const minX = Math.min(...platformTopPorts.map(p => p.pos.x));
+    const maxX = Math.max(...platformTopPorts.map(p => p.pos.x));
+    const upperMinY = Math.min(...platformTopPorts.map(p => p.pos.y));
+    const upperBusY = fittingBottom.y + Math.max(16, (upperMinY - fittingBottom.y) / 2);
 
-  // 3. Trunk & Bus Bar down from Platform Fitting to 6 Platform Nodes
-  const firstCardY = platformPorts[0].pos.y;
-  const busY = fitBot.y + (firstCardY - fitBot.y) * 0.45;
+    // Stem from fitting node down to upper bus bar
+    const stem = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    stem.id = 'wire_fitting_bus';
+    stem.setAttribute('x1', fittingBottom.x);
+    stem.setAttribute('y1', fittingBottom.y);
+    stem.setAttribute('x2', fittingBottom.x);
+    stem.setAttribute('y2', upperBusY);
+    stem.setAttribute('class', currentCampaign.cards['platform_fitting'] ? 'wire-path completed' : 'wire-path');
+    svg.appendChild(stem);
 
-  const minX = Math.min(...platformPorts.map(p => p.pos.x));
-  const maxX = Math.max(...platformPorts.map(p => p.pos.x));
+    // Full-Width Upper Bus Line (Across all 6 platform nodes)
+    const upperBus = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    upperBus.id = 'wire_upper_bus_bar';
+    upperBus.setAttribute('x1', minX);
+    upperBus.setAttribute('y1', upperBusY);
+    upperBus.setAttribute('x2', maxX);
+    upperBus.setAttribute('y2', upperBusY);
+    upperBus.setAttribute('class', currentCampaign.cards['platform_fitting'] ? 'wire-path completed' : 'wire-path');
+    svg.appendChild(upperBus);
 
-  const trunk = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-  trunk.id = 'wire_fitting_trunk';
-  trunk.setAttribute('x1', fitBot.x);
-  trunk.setAttribute('y1', fitBot.y);
-  trunk.setAttribute('x2', fitBot.x);
-  trunk.setAttribute('y2', busY);
-  trunk.setAttribute('class', currentCampaign.cards['platform_fitting'] ? 'wire-path completed' : 'wire-path');
-  svg.appendChild(trunk);
+    // Feeders from upper bus line down to each platform top port
+    platformTopPorts.forEach((item) => {
+      const feeder = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      feeder.id = `wire_upper_feeder_${item.platform}`;
+      feeder.setAttribute('x1', item.pos.x);
+      feeder.setAttribute('y1', upperBusY);
+      feeder.setAttribute('x2', item.pos.x);
+      feeder.setAttribute('y2', item.pos.y);
+      feeder.setAttribute('class', currentCampaign.cards[item.platform] ? 'wire-path completed' : 'wire-path');
+      svg.appendChild(feeder);
+    });
 
-  const bus = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-  bus.id = 'wire_bus_bar';
-  bus.setAttribute('x1', minX);
-  bus.setAttribute('y1', busY);
-  bus.setAttribute('x2', maxX);
-  bus.setAttribute('y2', busY);
-  bus.setAttribute('class', currentCampaign.cards['platform_fitting'] ? 'wire-path completed' : 'wire-path');
-  svg.appendChild(bus);
+    // Wire 4: Matching Full-Width LOWER Bus Line (Across all 6 platform nodes)
+    if (platformBottomPorts.length > 0 && mediaPorts.length > 0) {
+      const maxBottomY = Math.max(...platformBottomPorts.map(p => p.pos.y));
+      const minMediaTopY = Math.min(...mediaPorts.map(p => p.pos.y));
+      const lowerBusY = maxBottomY + 20;
 
-  platformPorts.forEach((item) => {
-    const feeder = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    feeder.id = `wire_branch_${item.platform}`;
-    feeder.setAttribute('x1', item.pos.x);
-    feeder.setAttribute('y1', busY);
-    feeder.setAttribute('x2', item.pos.x);
-    feeder.setAttribute('y2', item.pos.y);
-    feeder.setAttribute('class', currentCampaign.cards[item.platform] ? 'wire-path completed' : 'wire-path');
-    svg.appendChild(feeder);
-  });
+      const isAnyPlatformReady = distributionPlatforms.some(p => currentCampaign.cards[p]);
+      const isMediaReady = Boolean(currentCampaign.cards['images'] || currentCampaign.cards['video']);
+
+      // Feeders from each platform bottom port down to the lower bus line
+      platformBottomPorts.forEach((item) => {
+        const feeder = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        feeder.id = `wire_lower_feeder_${item.platform}`;
+        feeder.setAttribute('x1', item.pos.x);
+        feeder.setAttribute('y1', item.pos.y);
+        feeder.setAttribute('x2', item.pos.x);
+        feeder.setAttribute('y2', lowerBusY);
+        feeder.setAttribute('class', currentCampaign.cards[item.platform] ? 'wire-path completed' : 'wire-path');
+        svg.appendChild(feeder);
+      });
+
+      // Full-Width Lower Bus Line (Same width as upper line across all 6 platform nodes)
+      const lowerBus = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      lowerBus.id = 'wire_lower_bus_bar';
+      lowerBus.setAttribute('x1', minX);
+      lowerBus.setAttribute('y1', lowerBusY);
+      lowerBus.setAttribute('x2', maxX);
+      lowerBus.setAttribute('y2', lowerBusY);
+      lowerBus.setAttribute('class', isAnyPlatformReady ? 'wire-path completed' : 'wire-path');
+      svg.appendChild(lowerBus);
+
+      // Wire 5: Single Central Line dropping down from Lower Bus Line
+      const mediaForkY = lowerBusY + Math.max(16, (minMediaTopY - lowerBusY) / 2);
+      const mediaMinX = Math.min(...mediaPorts.map(p => p.pos.x));
+      const mediaMaxX = Math.max(...mediaPorts.map(p => p.pos.x));
+      const mediaCenterX = (mediaMinX + mediaMaxX) / 2;
+
+      // 1. The Single Central Vertical Line
+      const mediaStem = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      mediaStem.id = 'wire_media_single_stem';
+      mediaStem.setAttribute('x1', mediaCenterX);
+      mediaStem.setAttribute('y1', lowerBusY);
+      mediaStem.setAttribute('x2', mediaCenterX);
+      mediaStem.setAttribute('y2', mediaForkY);
+      mediaStem.setAttribute('class', isMediaReady ? 'wire-path completed' : 'wire-path');
+      svg.appendChild(mediaStem);
+
+      // 2. The Two Branches (Horizontal Splitter)
+      const mediaFork = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      mediaFork.id = 'wire_media_two_branches';
+      mediaFork.setAttribute('x1', mediaMinX);
+      mediaFork.setAttribute('y1', mediaForkY);
+      mediaFork.setAttribute('x2', mediaMaxX);
+      mediaFork.setAttribute('y2', mediaForkY);
+      mediaFork.setAttribute('class', isMediaReady ? 'wire-path completed' : 'wire-path');
+      svg.appendChild(mediaFork);
+
+      // 3. Feeders from the two branches down into AI Images and AI Video nodes
+      mediaPorts.forEach((item) => {
+        const feeder = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        feeder.id = `wire_media_feeder_${item.platform}`;
+        feeder.setAttribute('x1', item.pos.x);
+        feeder.setAttribute('y1', mediaForkY);
+        feeder.setAttribute('x2', item.pos.x);
+        feeder.setAttribute('y2', item.pos.y);
+        feeder.setAttribute('class', currentCampaign.cards[item.platform] ? 'wire-path completed' : 'wire-path');
+        svg.appendChild(feeder);
+      });
+    }
+  }
 }
 
 // ----------------------------------------------------
-// NODE GRAPH INITIAL STATE
+// NODE GRAPH STATE MANAGEMENT
 // ----------------------------------------------------
 function initNodesState() {
   VISIBLE_PLATFORMS.forEach(p => {
     const node = document.getElementById(`node_${p}`);
     const pill = document.getElementById(`status_pill_${p}`);
+    const snip = document.getElementById(`snippet_${p}`);
     if (node) {
       node.className = node.className.replace(/state-\w+/g, '') + ' state-idle';
     }
@@ -183,12 +343,34 @@ function initNodesState() {
       pill.innerText = '⚪ Idle';
     }
   });
+  redrawWires();
+}
+
+function setNodeState(platform, state) {
+  const node = document.getElementById(`node_${platform}`);
+  const pill = document.getElementById(`status_pill_${platform}`);
+  if (!node) return;
+
+  node.className = node.className.replace(/state-\w+/g, '').trim() + ` state-${state}`;
+
+  if (pill) {
+    if (state === 'running') {
+      pill.className = 'px-1.5 py-0.5 text-[9px] font-bold rounded bg-indigo-100 dark:bg-indigo-900/60 text-indigo-600 dark:text-indigo-300 animate-pulse';
+      pill.innerHTML = '⚡ Active';
+    } else if (state === 'completed') {
+      pill.className = 'px-1.5 py-0.5 text-[9px] font-bold rounded bg-emerald-100 dark:bg-emerald-900/60 text-emerald-600 dark:text-emerald-300';
+      pill.innerHTML = '✓ Ready';
+    } else {
+      pill.className = 'px-1.5 py-0.5 text-[9px] font-bold rounded bg-slate-100 dark:bg-gray-800 text-slate-500';
+      pill.innerText = '⚪ Idle';
+    }
+  }
 
   redrawWires();
 }
 
 // ----------------------------------------------------
-// PIPELINE EXECUTION ("GO" BUTTON)
+// CAMPAIGN EXECUTION ("GO" BUTTON)
 // ----------------------------------------------------
 function handleFormSubmit(e) {
   if (e) e.preventDefault();
@@ -207,11 +389,14 @@ async function startCampaign() {
     return;
   }
 
-  const tone = document.getElementById('toneSelect').value;
+  const toneElem = document.getElementById('toneSelect');
+  const tone = toneElem ? toneElem.value : 'Auto-Detect from Prompt';
 
   currentCampaign = {
-    id: null,
+    id: `cmp_${Date.now()}`,
+    timestamp: new Date().toLocaleString(),
     prompt: promptText,
+    tone: tone,
     cards: {},
     research: null,
     plan: null,
@@ -220,6 +405,7 @@ async function startCampaign() {
 
   initNodesState();
   document.getElementById('downloadBundleBtn').classList.add('hidden');
+  document.getElementById('createNewBtn').classList.add('hidden');
 
   const activityBar = document.getElementById('liveActivityBar');
   const activityMsg = document.getElementById('liveActivityMessage');
@@ -244,11 +430,13 @@ async function startCampaign() {
       body: JSON.stringify({
         prompt: promptText,
         tone: tone,
-        include_media: false
+        include_media: true
       })
     });
 
-    if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: Failed to start campaign`);
+    }
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder('utf-8');
@@ -257,429 +445,534 @@ async function startCampaign() {
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      
-      const cleanBuffer = buffer.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-      const events = cleanBuffer.split('\n\n');
-      buffer = events.pop() || '';
 
-      for (let raw of events) {
-        if (raw.trim()) {
-          parseSSEEvent(raw);
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+
+      let currentEvent = null;
+      for (const line of lines) {
+        if (line.startsWith('event: ')) {
+          currentEvent = line.replace('event: ', '').trim();
+        } else if (line.startsWith('data: ')) {
+          const rawData = line.replace('data: ', '').trim();
+          try {
+            const data = JSON.parse(rawData);
+            handlePipelineEvent(currentEvent, data);
+          } catch (err) {
+            console.debug('SSE parse note:', err);
+          }
         }
       }
     }
 
-    if (buffer.trim()) {
-      parseSSEEvent(buffer.trim());
-    }
-
-  } catch (err) {
-    console.error('SSE stream error, trying fallback:', err);
-    try {
-      const fallbackRes = await fetch('/api/forge', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: promptText,
-          tone: tone,
-          include_media: false
-        })
-      });
-      const fallbackData = await fallbackRes.json();
-      if (fallbackData.cards) {
-        fallbackData.cards.forEach(card => updateNodeContent(card));
-        completeWorkflow();
-      }
-    } catch (fbErr) {
-      showToast(`Error: ${fbErr.message}`, 'error');
-    }
+  } catch (error) {
+    console.error('Pipeline error:', error);
+    showToast(`Error: ${error.message}`, 'error');
   } finally {
     goBtn.disabled = false;
     goBtn.innerHTML = `<i class="fa-solid fa-play text-xs"></i><span>Go</span>`;
   }
 }
 
-function parseSSEEvent(raw) {
-  const cleanRaw = raw.replace(/\r/g, '');
-  const lines = cleanRaw.split('\n');
-  let type = '';
-  let dataStr = '';
+// ----------------------------------------------------
+// SSE PIPELINE EVENT HANDLER
+// ----------------------------------------------------
+function handlePipelineEvent(event, data) {
+  const activityMsg = document.getElementById('liveActivityMessage');
+  const agentBadge = document.getElementById('activeAgentBadge');
 
-  for (let l of lines) {
-    const trimmed = l.trim();
-    if (trimmed.startsWith('event:')) {
-      type = trimmed.replace('event:', '').trim();
-    } else if (trimmed.startsWith('data:')) {
-      dataStr += trimmed.replace('data:', '').trim();
-    }
-  }
-
-  if (!type || !dataStr) return;
-
-  try {
-    const data = JSON.parse(dataStr);
-    handlePipelineEvent(type.trim(), data);
-  } catch (e) {
-    console.error('SSE parse error:', e, dataStr);
-  }
-}
-
-function handlePipelineEvent(type, data) {
-  if (type === 'status') {
-    if (data.campaign_id) currentCampaign.id = data.campaign_id;
-
-    const activityMsg = document.getElementById('liveActivityMessage');
-    const agentBadge = document.getElementById('activeAgentBadge');
+  if (event === 'status') {
     if (activityMsg && data.message) activityMsg.innerText = data.message;
-    if (agentBadge && data.agent) agentBadge.innerText = data.agent.toUpperCase();
+    if (agentBadge && data.agent) agentBadge.innerText = data.agent;
 
     if (data.stage === 'researching') {
       setNodeState('research', 'running');
     } else if (data.stage === 'planning') {
+      setNodeState('research', 'completed');
       setNodeState('plan', 'running');
-      setWireActive('wire_research_to_plan');
     } else if (data.stage === 'platform_fitting') {
+      setNodeState('plan', 'completed');
       setNodeState('platform_fitting', 'running');
-      setWireActive('wire_plan_to_fitting');
     } else if (data.stage.startsWith('generating_')) {
-      const platformKey = data.stage.replace('generating_', '').replace('_script', '');
-      if (VISIBLE_PLATFORMS.includes(platformKey)) {
-        setNodeState(platformKey, 'running');
-        setWireActive('wire_fitting_trunk');
-        setWireActive('wire_bus_bar');
-        setWireActive(`wire_branch_${platformKey}`);
+      setNodeState('platform_fitting', 'completed');
+      const targetPlat = data.stage.replace('generating_', '');
+      if (VISIBLE_PLATFORMS.includes(targetPlat)) {
+        setNodeState(targetPlat, 'running');
       }
     }
-  }
-  else if (type === 'card') {
-    if (VISIBLE_PLATFORMS.includes(data.platform)) {
-      updateNodeContent(data);
+  } else if (event === 'card') {
+    const platform = data.platform;
+    currentCampaign.cards[platform] = data;
+
+    setNodeState(platform, 'completed');
+
+    const snippetElem = document.getElementById(`snippet_${platform}`);
+    if (snippetElem && data.content) {
+      const cleanSnippet = data.content
+        .replace(/[#*`_\[\]<>!]/g, '')
+        .replace(/\n+/g, ' ')
+        .trim();
+      snippetElem.innerText = cleanSnippet.slice(0, 110) + '...';
     }
-  }
-  else if (type === 'virality') {
+
+    redrawWires();
+  } else if (event === 'virality') {
     currentCampaign.virality = data;
-  }
-  else if (type === 'complete') {
-    completeWorkflow();
+  } else if (event === 'complete') {
+    VISIBLE_PLATFORMS.forEach(p => {
+      if (currentCampaign.cards[p]) setNodeState(p, 'completed');
+    });
+
+    if (activityMsg) activityMsg.innerText = '✨ Swarm completed all 11 workflow nodes!';
+    if (agentBadge) {
+      agentBadge.innerText = 'COMPLETE';
+      agentBadge.className = 'flex-shrink-0 text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/70 text-emerald-600 dark:text-emerald-300 font-mono';
+    }
+
+    document.getElementById('downloadBundleBtn').classList.remove('hidden');
+    document.getElementById('createNewBtn').classList.remove('hidden');
+
+    saveCurrentCampaignToHistory();
+    showToast('✨ Campaign generated & auto-saved to history!', 'success');
   }
 }
 
-function completeWorkflow() {
-  VISIBLE_PLATFORMS.forEach(p => {
-    if (currentCampaign.cards[p]) {
-      setNodeState(p, 'completed');
+// ----------------------------------------------------
+// FRESH START / CREATE NEW
+// ----------------------------------------------------
+function resetForNewCampaign() {
+  document.getElementById('promptInput').value = '';
+  document.getElementById('liveActivityBar').classList.add('hidden');
+  document.getElementById('downloadBundleBtn').classList.add('hidden');
+  document.getElementById('createNewBtn').classList.add('hidden');
+
+  currentCampaign = {
+    id: null,
+    timestamp: null,
+    prompt: '',
+    tone: '',
+    cards: {},
+    research: null,
+    plan: null,
+    virality: null
+  };
+
+  initNodesState();
+  closeDetailModal();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  showToast('✨ Clean slate ready for your new campaign!', 'success');
+}
+
+// ----------------------------------------------------
+// HISTORY PERSISTENCE & DRAWER
+// ----------------------------------------------------
+function saveCurrentCampaignToHistory() {
+  if (!currentCampaign.id || Object.keys(currentCampaign.cards).length === 0) return;
+  
+  let history = getHistory();
+  // Avoid duplicate ID
+  history = history.filter(h => h.id !== currentCampaign.id);
+  
+  history.unshift({
+    id: currentCampaign.id,
+    timestamp: currentCampaign.timestamp || new Date().toLocaleString(),
+    prompt: currentCampaign.prompt,
+    tone: currentCampaign.tone,
+    cards: currentCampaign.cards,
+    virality: currentCampaign.virality,
+    nodeCount: Object.keys(currentCampaign.cards).length
+  });
+
+  // Keep last 30 campaigns
+  if (history.length > 30) history = history.slice(0, 30);
+
+  localStorage.setItem('omnicast_campaign_history', JSON.stringify(history));
+  updateHistoryBadge();
+}
+
+function getHistory() {
+  try {
+    const raw = localStorage.getItem('omnicast_campaign_history');
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function updateHistoryBadge() {
+  const history = getHistory();
+  const badge = document.getElementById('historyCountBadge');
+  const totalLabel = document.getElementById('historyTotalCount');
+  if (badge) badge.innerText = history.length;
+  if (totalLabel) totalLabel.innerText = `${history.length} campaign${history.length === 1 ? '' : 's'} stored`;
+}
+
+function loadHistory() {
+  updateHistoryBadge();
+}
+
+function toggleHistoryDrawer() {
+  const drawer = document.getElementById('historyDrawer');
+  if (drawer.classList.contains('hidden')) {
+    renderHistoryDrawer();
+    drawer.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  } else {
+    drawer.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+}
+
+function renderHistoryDrawer() {
+  const container = document.getElementById('historyListContainer');
+  const history = getHistory();
+  updateHistoryBadge();
+
+  if (history.length === 0) {
+    container.innerHTML = `
+      <div class="text-center py-16 text-slate-400">
+        <i class="fa-solid fa-folder-open text-3xl mb-3 text-slate-300 dark:text-slate-600"></i>
+        <p class="text-xs">No saved campaigns yet.</p>
+        <p class="text-[11px] text-slate-400 mt-1">Run any prompt to auto-save!</p>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = history.map(item => `
+    <div class="bg-slate-50 dark:bg-gray-800/80 border border-slate-200 dark:border-gray-700 rounded-xl p-3.5 hover:border-indigo-500 transition-all group">
+      <div class="flex items-start justify-between gap-2 mb-1.5">
+        <h4 class="text-xs font-bold text-slate-900 dark:text-white line-clamp-2 leading-snug">${escapeHtml(item.prompt)}</h4>
+        <button onclick="deleteCampaignItem('${item.id}', event)" class="text-slate-400 hover:text-rose-500 p-1 transition-colors" title="Delete campaign">
+          <i class="fa-regular fa-trash-can text-xs"></i>
+        </button>
+      </div>
+      <div class="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 pt-1">
+        <span><i class="fa-regular fa-clock mr-1"></i>${item.timestamp}</span>
+        <span class="px-1.5 py-0.2 rounded bg-indigo-100 dark:bg-indigo-900/60 text-indigo-600 dark:text-indigo-300 font-semibold">${item.nodeCount || Object.keys(item.cards || {}).length} Nodes</span>
+      </div>
+      <div class="mt-2.5 pt-2 border-t border-slate-200 dark:border-gray-700/60 flex justify-end">
+        <button onclick="restoreCampaignItem('${item.id}')" class="px-2.5 py-1 text-[11px] font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-all flex items-center space-x-1">
+          <span>Restore & View</span>
+          <i class="fa-solid fa-arrow-right text-[9px]"></i>
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function restoreCampaignItem(id) {
+  const history = getHistory();
+  const target = history.find(h => h.id === id);
+  if (!target) return;
+
+  currentCampaign = {
+    id: target.id,
+    timestamp: target.timestamp,
+    prompt: target.prompt,
+    tone: target.tone || 'Auto-Detect',
+    cards: target.cards || {},
+    research: target.cards?.research || null,
+    plan: target.cards?.plan || null,
+    virality: target.virality || null
+  };
+
+  document.getElementById('promptInput').value = target.prompt;
+  initNodesState();
+
+  Object.keys(currentCampaign.cards).forEach(plat => {
+    setNodeState(plat, 'completed');
+    const card = currentCampaign.cards[plat];
+    const snippetElem = document.getElementById(`snippet_${plat}`);
+    if (snippetElem && card.content) {
+      const cleanSnippet = card.content.replace(/[#*`_\[\]<>!]/g, '').replace(/\n+/g, ' ').trim();
+      snippetElem.innerText = cleanSnippet.slice(0, 110) + '...';
     }
   });
 
-  setWireCompleted('wire_research_to_plan');
-  setWireCompleted('wire_plan_to_fitting');
-  setWireCompleted('wire_fitting_trunk');
-  setWireCompleted('wire_bus_bar');
-  PLATFORM_NODES.forEach(p => setWireCompleted(`wire_branch_${p}`));
-
-  const activityMsg = document.getElementById('liveActivityMessage');
-  const agentBadge = document.getElementById('activeAgentBadge');
-  if (activityMsg) activityMsg.innerText = '✨ Swarm completed all 9 workflow nodes!';
-  if (agentBadge) {
-    agentBadge.innerText = '100% COMPLETE';
-    agentBadge.className = 'flex-shrink-0 text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 font-mono';
-  }
-
   document.getElementById('downloadBundleBtn').classList.remove('hidden');
-  document.getElementById('downloadBundleBtn').classList.add('flex');
-  showToast('✨ All workflow nodes completed successfully!', 'success');
+  document.getElementById('createNewBtn').classList.remove('hidden');
+
+  toggleHistoryDrawer();
+  redrawWires();
+  showToast(`Restored campaign: "${target.prompt.slice(0, 35)}..."`, 'success');
 }
 
-function setNodeState(platform, state) {
-  const node = document.getElementById(`node_${platform}`);
-  const pill = document.getElementById(`status_pill_${platform}`);
-  if (!node) return;
-
-  node.className = node.className.replace(/state-\w+/g, '') + ` state-${state}`;
-
-  if (pill) {
-    if (state === 'running') {
-      pill.className = 'px-2 py-0.5 text-[10px] font-bold rounded-md bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 animate-pulse';
-      pill.innerHTML = '⚡ Running...';
-    } else if (state === 'completed') {
-      pill.className = 'px-2 py-0.5 text-[10px] font-bold rounded-md bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300';
-      pill.innerHTML = '✓ Ready';
-    } else {
-      pill.className = 'px-2 py-0.5 text-[10px] font-bold rounded-md bg-slate-100 dark:bg-gray-800 text-slate-500';
-      pill.innerHTML = '⚪ Idle';
-    }
-  }
+function deleteCampaignItem(id, e) {
+  if (e) e.stopPropagation();
+  let history = getHistory();
+  history = history.filter(h => h.id !== id);
+  localStorage.setItem('omnicast_campaign_history', JSON.stringify(history));
+  renderHistoryDrawer();
+  showToast('Campaign deleted.', 'info');
 }
 
-function setWireActive(wireId) {
-  const wire = document.getElementById(wireId);
-  if (wire) {
-    wire.classList.remove('completed');
-    wire.classList.add('active');
-  }
-}
-
-function setWireCompleted(wireId) {
-  const wire = document.getElementById(wireId);
-  if (wire) {
-    wire.classList.remove('active');
-    wire.classList.add('completed');
-  }
-}
-
-function updateNodeContent(card) {
-  const platform = card.platform;
-  currentCampaign.cards[platform] = card;
-  setNodeState(platform, 'completed');
-  setWireCompleted(`wire_branch_${platform}`);
-
-  const snippetElem = document.getElementById(`snippet_${platform}`);
-  if (snippetElem && card.content) {
-    const cleanSnippet = card.content
-      .replace(/^#+ /gm, '')
-      .replace(/\*\*/g, '')
-      .replace(/\[.*?\]/g, '')
-      .replace(/---/g, '')
-      .trim()
-      .slice(0, 110) + '...';
-    snippetElem.innerText = cleanSnippet;
+function clearAllHistory() {
+  if (confirm('Are you sure you want to delete all saved campaign history?')) {
+    localStorage.removeItem('omnicast_campaign_history');
+    renderHistoryDrawer();
+    showToast('All campaign history cleared.', 'info');
   }
 }
 
 // ----------------------------------------------------
-// CENTERED MODAL DETAIL INSPECTION (TIGHT & CLEAN)
+// DETAIL INSPECTION MODAL (With Media Suite Support)
 // ----------------------------------------------------
 function openDetailModal(platform) {
   activeModalPlatform = platform;
+  const config = PLATFORMS_CONFIG[platform] || { title: platform, icon: 'fa-cube', badgeClass: 'bg-indigo-600', subtitle: 'Platform Asset' };
   const card = currentCampaign.cards[platform];
-  const meta = getPlatformMeta(platform);
 
-  document.getElementById('modalTitle').innerText = card ? card.title : meta.label;
-  document.getElementById('modalPlatformSubtitle').innerText = meta.label;
-  
-  const iconBadge = document.getElementById('modalBadgeIcon');
-  iconBadge.className = `w-8 h-8 rounded-xl ${meta.badgeClass} flex items-center justify-center text-white text-sm shadow-sm`;
-  iconBadge.innerHTML = `<i class="${meta.icon}"></i>`;
+  document.getElementById('modalTitle').innerText = config.title;
+  document.getElementById('modalPlatformSubtitle').innerText = config.subtitle;
+  document.getElementById('modalBadgeIcon').className = `w-8 h-8 rounded-xl flex items-center justify-center text-sm shadow-sm ${config.badgeClass}`;
+  document.getElementById('modalBadgeIcon').innerHTML = `<i class="${config.icon}"></i>`;
 
   const contentView = document.getElementById('modalContentView');
-  if (card && card.content) {
-    contentView.innerHTML = parseMarkdownToHtml(card.content);
+  const editView = document.getElementById('modalEditView');
+  const editTextarea = document.getElementById('modalEditTextarea');
+
+  isEditMode = false;
+  contentView.classList.remove('hidden');
+  editView.classList.add('hidden');
+
+  if (!card || !card.content) {
+    contentView.innerHTML = `
+      <div class="text-center py-12 text-slate-400">
+        <i class="fa-solid fa-hourglass-start text-3xl mb-2 animate-bounce"></i>
+        <p class="text-xs">This node hasn't run yet. Click <strong>"Go"</strong> to execute the full studio swarm!</p>
+      </div>`;
+    editTextarea.value = '';
   } else {
-    contentView.innerHTML = `<div class="p-8 text-center text-slate-400">Node has not executed yet. Click <strong>Go</strong> to run the workflow.</div>`;
+    // Custom media view handling
+    if (platform === 'images' && card.metadata && card.metadata.images && card.metadata.images.length > 0) {
+      let imagesHtml = `<div class="space-y-4">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-gray-800">
+          <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Generated ${card.metadata.images.length} Image Asset(s)</span>
+          <span class="text-[10px] text-amber-600 dark:text-amber-400 font-semibold">100% Directive-Driven</span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">`;
+      
+      card.metadata.images.forEach(img => {
+        imagesHtml += `
+          <div class="bg-slate-50 dark:bg-gray-800 rounded-xl p-3 border border-slate-200 dark:border-gray-700 flex flex-col justify-between">
+            <div>
+              <img src="${img.url}" alt="${escapeHtml(img.title)}" class="w-full rounded-lg shadow-sm mb-2 object-cover ${img.aspect_ratio === '9:16' ? 'max-h-[280px]' : 'max-h-[180px]'}" />
+              <h5 class="text-xs font-bold text-slate-900 dark:text-white">${escapeHtml(img.title)}</h5>
+              <span class="text-[10px] text-slate-500">${img.theme} • Ratio: ${img.aspect_ratio}</span>
+            </div>
+            <a href="${img.url}" download="${img.title.replace(/\s+/g, '_')}.png" class="mt-3 inline-flex items-center justify-center space-x-1 text-xs font-semibold py-1.5 px-3 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-all">
+              <i class="fa-solid fa-download text-[10px]"></i>
+              <span>Download High-Res</span>
+            </a>
+          </div>`;
+      });
+      imagesHtml += `</div></div>`;
+      contentView.innerHTML = imagesHtml;
+      editTextarea.value = card.content;
+    } else if (platform === 'video' && card.metadata && card.metadata.video_url) {
+      contentView.innerHTML = `
+        <div class="space-y-4">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-gray-800">
+            <span class="text-xs font-bold text-slate-700 dark:text-slate-300">20-Second Dynamic MP4 Video</span>
+            <span class="text-[10px] text-rose-600 dark:text-rose-400 font-semibold">4-Scene Storyboard</span>
+          </div>
+          <div class="flex justify-center bg-black rounded-xl p-2 shadow-inner">
+            <video controls autoplay loop class="rounded-lg max-h-[360px] w-auto">
+              <source src="${card.metadata.video_url}" type="video/mp4">
+              Your browser does not support the video tag.
+            </video>
+          </div>
+          <div class="bg-slate-50 dark:bg-gray-800 p-3 rounded-xl border border-slate-200 dark:border-gray-700 text-xs">
+            <h6 class="font-bold text-slate-900 dark:text-white mb-1">🎬 Storyboard Scenes:</h6>
+            <ul class="list-disc list-inside space-y-1 text-slate-600 dark:text-slate-400 text-[11px]">
+              ${(card.metadata.scenes || ['Scene 1', 'Scene 2', 'Scene 3', 'Scene 4']).map(s => `<li>${escapeHtml(s)}</li>`).join('')}
+            </ul>
+          </div>
+          <div class="flex justify-end">
+            <a href="${card.metadata.video_url}" download="omnicast_campaign_video.mp4" class="inline-flex items-center space-x-1.5 text-xs font-semibold py-2 px-4 bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition-all">
+              <i class="fa-solid fa-download"></i>
+              <span>Download MP4 Video</span>
+            </a>
+          </div>
+        </div>`;
+      editTextarea.value = card.content;
+    } else {
+      contentView.innerHTML = formatMarkdown(card.content);
+      editTextarea.value = card.content;
+    }
   }
 
-  contentView.classList.remove('hidden');
-  document.getElementById('modalEditView').classList.add('hidden');
   document.getElementById('modalTweakInput').value = '';
   document.getElementById('nodeDetailModal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
 }
 
 function closeDetailModal() {
   document.getElementById('nodeDetailModal').classList.add('hidden');
   activeModalPlatform = null;
-}
-
-// ----------------------------------------------------
-// MODAL ACTIONS: COPY, DOWNLOAD, EDIT, 1-CLICK REGEN
-// ----------------------------------------------------
-function copyCurrentModalContent() {
-  if (!activeModalPlatform) return;
-  const card = currentCampaign.cards[activeModalPlatform];
-  if (!card) return;
-
-  navigator.clipboard.writeText(card.content).then(() => {
-    const icon = document.getElementById('modalCopyIcon');
-    if (icon) {
-      icon.className = 'fa-solid fa-check text-emerald-500';
-      setTimeout(() => { icon.className = 'fa-regular fa-copy'; }, 2000);
-    }
-    showToast(`Copied ${card.title} to clipboard!`, 'success');
-  });
-}
-
-function downloadCurrentModalContent() {
-  if (!activeModalPlatform) return;
-  const card = currentCampaign.cards[activeModalPlatform];
-  if (!card) return;
-
-  const ext = (activeModalPlatform === 'whatsapp' || activeModalPlatform === 'facebook') ? 'txt' : 'md';
-  const blob = new Blob([card.content], { type: 'text/plain;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `omnicast_${activeModalPlatform}.${ext}`;
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast(`Downloaded omnicast_${activeModalPlatform}.${ext}`, 'info');
+  document.body.style.overflow = '';
 }
 
 function toggleModalEditMode() {
+  isEditMode = !isEditMode;
   const contentView = document.getElementById('modalContentView');
   const editView = document.getElementById('modalEditView');
-  const textarea = document.getElementById('modalEditTextarea');
-  const card = currentCampaign.cards[activeModalPlatform];
 
-  if (editView.classList.contains('hidden')) {
-    textarea.value = card ? card.content : '';
+  if (isEditMode) {
     contentView.classList.add('hidden');
     editView.classList.remove('hidden');
   } else {
-    editView.classList.add('hidden');
     contentView.classList.remove('hidden');
+    editView.classList.add('hidden');
   }
 }
 
 function saveModalEdit() {
-  const textarea = document.getElementById('modalEditTextarea');
+  const newContent = document.getElementById('modalEditTextarea').value;
+  if (activeModalPlatform && currentCampaign.cards[activeModalPlatform]) {
+    currentCampaign.cards[activeModalPlatform].content = newContent;
+    document.getElementById('modalContentView').innerHTML = formatMarkdown(newContent);
+    toggleModalEditMode();
+    saveCurrentCampaignToHistory();
+    showToast('Changes saved & synced to history!', 'success');
+  }
+}
+
+function copyCurrentModalContent() {
+  if (!activeModalPlatform || !currentCampaign.cards[activeModalPlatform]) {
+    showToast('No content to copy!', 'error');
+    return;
+  }
+  const content = currentCampaign.cards[activeModalPlatform].content;
+  navigator.clipboard.writeText(content).then(() => {
+    showToast('Copied to clipboard!', 'success');
+  });
+}
+
+function downloadCurrentModalContent() {
+  if (!activeModalPlatform || !currentCampaign.cards[activeModalPlatform]) return;
   const card = currentCampaign.cards[activeModalPlatform];
-  if (!card) return;
-
-  card.content = textarea.value;
-  document.getElementById('modalContentView').innerHTML = parseMarkdownToHtml(card.content);
-  toggleModalEditMode();
-
-  updateNodeContent(card);
-  showToast(`Saved changes for ${card.title}`, 'success');
+  const blob = new Blob([card.content], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${activeModalPlatform}_${card.title.replace(/\s+/g, '_')}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 // ----------------------------------------------------
-// 1-CLICK AUTONOMOUS REGENERATION (NO PROMPT FORCED)
+// 1-CLICK INSTANT REGENERATE / TWEAK
 // ----------------------------------------------------
 async function execute1ClickRegen() {
-  if (!activeModalPlatform) return;
-  const platform = activeModalPlatform;
-  const card = currentCampaign.cards[platform];
-  if (!card) return;
-
+  if (!activeModalPlatform || !currentCampaign.cards[activeModalPlatform]) return;
   const tweak = document.getElementById('modalTweakInput').value.trim();
+  const currentCard = currentCampaign.cards[activeModalPlatform];
 
   const regenBtn = document.getElementById('modalRegenBtn');
   const regenIcon = document.getElementById('modalRegenIcon');
-  regenBtn.disabled = true;
-  regenBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-[11px]"></i><span>Re-rolling...</span>`;
-  if (regenIcon) regenIcon.className = 'fa-solid fa-spinner fa-spin text-amber-500';
+  if (regenBtn) regenBtn.disabled = true;
+  if (regenIcon) regenIcon.className = 'fa-solid fa-spinner fa-spin text-sm';
+
+  showToast(`Regenerating ${PLATFORMS_CONFIG[activeModalPlatform]?.title || activeModalPlatform}...`, 'info');
 
   try {
     const res = await fetch('/api/regenerate-card', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        campaign_id: currentCampaign.id || 'cmp_active',
-        platform: platform,
-        current_content: card.content,
-        tweak_instruction: tweak || 'Autonomously explore an alternative high-retention angle with fresh hooks and punchlines.',
-        original_prompt: currentCampaign.prompt,
-        research_summary: currentCampaign.research ? currentCampaign.research.summary : ''
+        campaign_id: currentCampaign.id || 'cmp_regen',
+        platform: activeModalPlatform,
+        current_content: currentCard.content,
+        research_summary: currentCampaign.cards['research']?.content || currentCampaign.prompt,
+        tweak_instruction: tweak || 'Elevate with maximum precision and freshness'
       })
     });
 
-    if (!res.ok) throw new Error(`Regen failed with status ${res.status}`);
-
-    const updatedCard = await res.json();
-    currentCampaign.cards[platform] = updatedCard;
-
-    document.getElementById('modalContentView').innerHTML = parseMarkdownToHtml(updatedCard.content);
-    document.getElementById('modalTweakInput').value = '';
-
-    updateNodeContent(updatedCard);
-    showToast(`✨ Re-rolled ${updatedCard.title} successfully!`, 'success');
+    if (res.ok) {
+      const updatedCard = await res.json();
+      currentCampaign.cards[activeModalPlatform] = updatedCard;
+      openDetailModal(activeModalPlatform);
+      saveCurrentCampaignToHistory();
+      showToast('Node regenerated successfully!', 'success');
+    }
   } catch (err) {
-    showToast(`Regeneration error: ${err.message}`, 'error');
+    showToast(`Regen note: ${err.message}`, 'error');
   } finally {
-    regenBtn.disabled = false;
-    regenBtn.innerHTML = `<i class="fa-solid fa-rotate text-[11px]"></i><span>Re-roll</span>`;
-    if (regenIcon) regenIcon.className = 'fa-solid fa-rotate';
+    if (regenBtn) regenBtn.disabled = false;
+    if (regenIcon) regenIcon.className = 'fa-solid fa-rotate text-sm';
   }
 }
 
 // ----------------------------------------------------
-// FULL ZIP BUNDLE EXPORT
+// DOWNLOAD ZIP BUNDLE
 // ----------------------------------------------------
-async function downloadCampaignBundle() {
-  const cardsList = Object.values(currentCampaign.cards);
-  if (cardsList.length === 0) return;
-
-  const btn = document.getElementById('downloadBundleBtn');
-  btn.disabled = true;
-  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i><span>Packaging ZIP...</span>`;
-
-  try {
-    const res = await fetch('/api/export-bundle', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        campaign_id: currentCampaign.id,
-        prompt: currentCampaign.prompt,
-        created_at: new Date().toISOString(),
-        cards: cardsList
-      })
-    });
-
-    const data = await res.json();
-    if (data.download_url) {
-      const a = document.createElement('a');
-      a.href = data.download_url;
-      a.download = data.filename || 'omnicast_campaign.zip';
-      a.click();
-      showToast('📦 Campaign ZIP bundle downloaded!', 'success');
-    }
-  } catch (err) {
-    showToast(`Failed to download bundle: ${err.message}`, 'error');
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = `<i class="fa-solid fa-file-zipper"></i><span>Download All (.ZIP)</span>`;
+function downloadCampaignBundle() {
+  if (Object.keys(currentCampaign.cards).length === 0) {
+    showToast('Run a campaign first!', 'error');
+    return;
   }
+  showToast('Generating full package...', 'info');
+  
+  // Package into client-side file bundle
+  const zipManifest = {
+    campaign_id: currentCampaign.id,
+    prompt: currentCampaign.prompt,
+    created_at: currentCampaign.timestamp,
+    cards: currentCampaign.cards
+  };
+  
+  const blob = new Blob([JSON.stringify(zipManifest, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `omnicast_${currentCampaign.id || 'campaign'}_manifest.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Campaign manifest downloaded!', 'success');
 }
 
 // ----------------------------------------------------
 // UTILITIES
 // ----------------------------------------------------
-function getPlatformMeta(platform) {
-  const map = {
-    research: { label: 'Deep Research Dossier', icon: 'fa-solid fa-magnifying-glass', badgeClass: 'badge-research' },
-    plan: { label: 'Strategic Campaign Plan', icon: 'fa-solid fa-brain', badgeClass: 'badge-plan' },
-    platform_fitting: { label: 'Platform Adaptation Engine', icon: 'fa-solid fa-ruler-combined', badgeClass: 'badge-fitting' },
-    linkedin: { label: 'LinkedIn Post', icon: 'fa-brands fa-linkedin-in', badgeClass: 'badge-linkedin' },
-    twitter: { label: 'X / Twitter Thread', icon: 'fa-brands fa-x-twitter', badgeClass: 'badge-twitter' },
-    whatsapp: { label: 'WhatsApp Broadcast', icon: 'fa-brands fa-whatsapp', badgeClass: 'badge-whatsapp' },
-    newsletter: { label: 'Email Newsletter', icon: 'fa-regular fa-envelope', badgeClass: 'badge-newsletter' },
-    facebook: { label: 'Facebook Post', icon: 'fa-brands fa-facebook-f', badgeClass: 'badge-facebook' },
-    instagram: { label: 'Instagram Carousel', icon: 'fa-brands fa-instagram', badgeClass: 'badge-instagram' },
-  };
-  return map[platform] || { label: platform, icon: 'fa-solid fa-cube', badgeClass: 'bg-indigo-600 text-white' };
+function formatMarkdown(text) {
+  if (!text) return '';
+  let html = text
+    .replace(/^### (.*$)/gim, '<h3 class="text-sm font-bold text-slate-900 dark:text-white mt-3 mb-1.5">$1</h3>')
+    .replace(/^## (.*$)/gim, '<h2 class="text-base font-bold text-slate-900 dark:text-white mt-4 mb-2">$1</h2>')
+    .replace(/^# (.*$)/gim, '<h1 class="text-lg font-bold text-slate-900 dark:text-white mt-4 mb-2">$1</h1>')
+    .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/gim, '<em>$1</em>')
+    .replace(/^• (.*$)/gim, '<li class="ml-4 list-disc text-slate-700 dark:text-slate-300 text-xs">$1</li>')
+    .replace(/^- (.*$)/gim, '<li class="ml-4 list-disc text-slate-700 dark:text-slate-300 text-xs">$1</li>')
+    .replace(/\n\n/gim, '<p class="my-2"></p>')
+    .replace(/\n/gim, '<br/>');
+  return html;
 }
 
-function parseMarkdownToHtml(md) {
-  if (!md) return '';
-  let html = md;
-  html = html.replace(/^### (.*$)/gim, '<h3 class="font-bold text-sm text-slate-900 dark:text-white mt-3 mb-1">$1</h3>');
-  html = html.replace(/^## (.*$)/gim, '<h2 class="font-bold text-base text-slate-900 dark:text-white mt-3.5 mb-1.5">$1</h2>');
-  html = html.replace(/\*\*(.*?)\*\*/gim, '<strong class="font-semibold text-slate-900 dark:text-white">$1</strong>');
-  html = html.replace(/\*(.*?)\*/gim, '<em>$1</em>');
-  html = html.replace(/_(.*?)_/gim, '<em>$1</em>');
-  html = html.replace(/`(.*?)`/gim, '<code class="px-1 py-0.5 rounded text-xs bg-slate-100 dark:bg-gray-800 text-indigo-600 dark:text-indigo-400 font-mono">$1</code>');
-  html = html.replace(/^---$/gim, '<hr class="my-2.5 border-slate-200 dark:border-gray-800">');
-  html = html.replace(/^\• (.*$)/gim, '<li class="flex items-start space-x-1.5 my-0.5"><span class="text-indigo-500 font-bold">•</span><span>$1</span></li>');
-  html = html.replace(/^\* (.*$)/gim, '<li class="flex items-start space-x-1.5 my-0.5"><span class="text-indigo-500 font-bold">•</span><span>$1</span></li>');
-  html = html.replace(/\n/gim, '<br>');
-  return html;
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 function showToast(message, type = 'info') {
   const container = document.getElementById('toastContainer');
   if (!container) return;
-  const toast = document.createElement('div');
-  const bg = type === 'success' ? 'bg-emerald-600 text-white' : (type === 'error' ? 'bg-rose-600 text-white' : 'bg-slate-900 text-white dark:bg-white dark:text-slate-900');
-  const icon = type === 'success' ? 'fa-check' : (type === 'error' ? 'fa-triangle-exclamation' : 'fa-info');
 
-  toast.className = `flex items-center space-x-2.5 px-4 py-3 rounded-xl shadow-xl text-xs sm:text-sm font-medium ${bg} pointer-events-auto transform transition-all duration-300 translate-y-2 opacity-0`;
-  toast.innerHTML = `<i class="fa-solid ${icon}"></i><span>${message}</span>`;
+  const toast = document.createElement('div');
+  const colors = {
+    success: 'bg-emerald-600 text-white',
+    error: 'bg-rose-600 text-white',
+    info: 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'
+  };
+
+  toast.className = `px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold flex items-center space-x-2 transition-all transform duration-200 pointer-events-auto ${colors[type] || colors.info}`;
+  toast.innerHTML = `<span>${message}</span>`;
   container.appendChild(toast);
 
-  setTimeout(() => { toast.classList.remove('translate-y-2', 'opacity-0'); }, 10);
   setTimeout(() => {
-    toast.classList.add('opacity-0', 'translate-y-2');
-    setTimeout(() => toast.remove(), 300);
-  }, 3500);
+    toast.style.opacity = '0';
+    setTimeout(() => toast.remove(), 200);
+  }, 3000);
 }

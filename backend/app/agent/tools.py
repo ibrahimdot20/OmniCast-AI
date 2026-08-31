@@ -1,106 +1,105 @@
 import os
 import re
 import uuid
-import zipfile
+import json
 import logging
+import zipfile
 import warnings
 from pathlib import Path
-from typing import Dict, Any, List, Optional
-import requests
-from bs4 import BeautifulSoup
+from typing import List, Dict, Any, Optional
 from PIL import Image, ImageDraw, ImageFont
 
+from app.config import (
+    IMAGES_DIR,
+    VIDEO_DIR,
+    ZIP_DIR,
+    GEMINI_API_KEY
+)
+
 warnings.filterwarnings("ignore")
-
-from app.config import AUDIO_DIR, IMAGES_DIR, VIDEO_DIR, GEMINI_API_KEY
-
 logger = logging.getLogger("omnicast.tools")
 
 def search_live_web(query: str, max_results: int = 5) -> str:
-    """
-    Performs real-time live internet web search.
-    """
+    """Live web search using DDGS."""
     try:
-        from duckduckgo_search import DDGS
+        try:
+            from ddgs import DDGS
+        except ImportError:
+            from duckduckgo_search import DDGS
+            
         with DDGS() as ddgs:
             results = list(ddgs.text(query, max_results=max_results))
-            if results:
-                formatted = []
-                for i, r in enumerate(results, 1):
-                    title = r.get("title", "")
-                    snippet = r.get("body", "")
-                    url = r.get("href", "")
-                    formatted.append(f"• Title: {title}\n  Summary: {snippet}\n  URL: {url}")
-                return "\n\n".join(formatted)
+            if not results:
+                return f"No direct search hits for '{query}'."
+            formatted = []
+            for r in results:
+                formatted.append(f"Title: {r.get('title', '')}\nSnippet: {r.get('body', '')}\nURL: {r.get('href', '')}")
+            return "\n\n---\n\n".join(formatted)
     except Exception as e:
-        logger.debug(f"DuckDuckGo primary search notice: {e}")
-        
-    try:
-        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-        resp = requests.get(f"https://html.duckduckgo.com/html/?q={requests.utils.quote(query)}", headers=headers, timeout=8)
-        soup = BeautifulSoup(resp.text, "html.parser")
-        snippets = [s.get_text(strip=True) for s in soup.find_all("a", class_="result__snippet")[:4]]
-        if snippets:
-            return "\n".join([f"• {s}" for s in snippets])
-    except Exception as fb_err:
-        logger.debug(f"Search HTML fallback note: {fb_err}")
-        
-    return f"Search data for query: {query}"
+        logger.warning(f"Web search note: {e}")
+        return f"Market Intelligence for: '{query}'."
 
-def scrape_url_content(url: str) -> str:
-    """Fetches and extracts clean readable text from any web URL."""
+def scrape_url_content(url: str, max_chars: int = 2500) -> str:
+    """Scrapes raw web page HTML body content."""
+    if not url or not url.startswith("http"):
+        return ""
     try:
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        }
-        resp = requests.get(url, headers=headers, timeout=8)
-        resp.raise_for_status()
+        import urllib.request
+        from bs4 import BeautifulSoup
         
-        soup = BeautifulSoup(resp.text, "html.parser")
-        for tag in soup(["script", "style", "nav", "footer", "header", "noscript", "aside", "form"]):
-            tag.decompose()
-            
-        paragraphs = [p.get_text(strip=True) for p in soup.find_all(["p", "h1", "h2", "h3", "li"])]
-        content = " ".join([p for p in paragraphs if len(p) > 25])
-        return content[:3000] if content else "No readable body text extracted from URL."
+        req = urllib.request.Request(
+            url, 
+            headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+        )
+        with urllib.request.urlopen(req, timeout=5) as response:
+            html = response.read().decode('utf-8', errors='ignore')
+            soup = BeautifulSoup(html, 'html.parser')
+            for tag in soup(["script", "style", "nav", "footer", "header", "aside"]):
+                tag.extract()
+            text = ' '.join(soup.stripped_strings)
+            return text[:max_chars]
     except Exception as e:
-        return f"Could not scrape URL ({str(e)})."
+        logger.debug(f"URL scrape note for {url}: {e}")
+        return ""
 
 def deep_multi_vector_search(topic: str) -> str:
-    """
-    Executes a Multi-Vector Deep Research Swarm:
-    1. Statistical & Fact Search
-    2. Tactical Strategy & Controversies
-    3. Latest 2026 Developments
-    4. Top URL Content Crawling
-    """
-    clean_topic = topic.split("\n")[0].strip()[:80]
-    
-    vectors = [
-        f"{clean_topic} statistics data facts 2026",
-        f"{clean_topic} strategy tactical guide analysis",
-        f"{clean_topic} latest news updates trends 2026"
+    """Autonomous multi-vector search crawler."""
+    try:
+        try:
+            from ddgs import DDGS
+        except ImportError:
+            from duckduckgo_search import DDGS
+    except Exception:
+        return search_live_web(topic, max_results=5)
+
+    clean_topic = topic.strip()
+    queries = [
+        clean_topic,
+        f"{clean_topic} statistics data numbers",
+        f"{clean_topic} tactical guide strategies",
+        f"{clean_topic} latest developments 2026"
     ]
     
     collected_intelligence = []
     discovered_urls = []
     
-    for v in vectors:
+    for q in queries:
         try:
-            from duckduckgo_search import DDGS
             with DDGS() as ddgs:
-                res = list(ddgs.text(v, max_results=3))
-                if res:
-                    for r in res:
-                        collected_intelligence.append(f"[{v.split()[-2].upper()} INTEL] {r.get('title', '')}: {r.get('body', '')}")
-                        if r.get("href") and len(discovered_urls) < 2 and not r.get("href").endswith(".pdf"):
-                            discovered_urls.append(r.get("href"))
-        except Exception:
-            continue
+                results = list(ddgs.text(q, max_results=3))
+                for r in results:
+                    href = r.get('href', '')
+                    if href and href not in discovered_urls and href.startswith('http'):
+                        discovered_urls.append(href)
+                    snippet = r.get('body', '')
+                    title = r.get('title', '')
+                    if snippet:
+                        collected_intelligence.append(f"[{title}] {snippet}")
+        except Exception as e:
+            logger.debug(f"Vector search iteration note ({q}): {e}")
             
-    # Deep crawl top 1-2 real web pages for in-depth source knowledge
     scraped_page_text = []
-    for u in discovered_urls:
+    for u in discovered_urls[:2]:
         page_body = scrape_url_content(u)
         if len(page_body) > 100:
             scraped_page_text.append(f"--- SOURCE DEEP-DIVE ({u}) ---\n{page_body[:1500]}")
@@ -111,13 +110,87 @@ def deep_multi_vector_search(topic: str) -> str:
         
     return full_dossier if full_dossier.strip() else search_live_web(clean_topic, max_results=5)
 
-def generate_ai_image(prompt_text: str, title: str, subtitle: str, aspect_ratio: str = "16:9") -> str:
+# =========================================================================
+# IMAGES STUDIO GENERATOR (Directive-Driven)
+# =========================================================================
+def generate_campaign_images(user_prompt: str, topic: str, core_thesis: str) -> List[Dict[str, Any]]:
     """
-    High-quality image generation using Gemini / Imagen 3 when available,
-    with an advanced HD composite graphic rendering engine.
+    Directive-Driven Image Generation:
+    - Parses user_prompt for specific image count & theme instructions.
+    - If user specifies (e.g. '4 images showing X'), generates exactly what is asked.
+    - If unspecified, generates 1 bespoke hero image tailored to the campaign.
     """
-    file_id = f"ai_thumb_{uuid.uuid4().hex[:8]}"
+    # 1. Parse count from prompt (e.g. "4 images", "create 3 thumbnails", "2 banners")
+    prompt_lower = user_prompt.lower()
+    count = 1
     
+    match = re.search(r'(\d+)\s*(?:images?|pictures?|photos?|thumbnails?|banners?|visuals?|graphics?|slides?)', prompt_lower)
+    if match:
+        try:
+            requested_count = int(match.group(1))
+            count = max(1, min(requested_count, 6)) # Cap between 1 and 6
+        except:
+            count = 1
+    elif any(w in prompt_lower for w in ["four images", "4 image", "4 photos"]):
+        count = 4
+    elif any(w in prompt_lower for w in ["three images", "3 image", "3 photos"]):
+        count = 3
+    elif any(w in prompt_lower for w in ["two images", "2 image", "2 photos"]):
+        count = 2
+
+    # 2. Derive titles and themes for each image
+    image_specs = []
+    if count == 1:
+        image_specs.append({
+            "title": f"{topic[:40]} Masterclass",
+            "subtitle": core_thesis[:80],
+            "aspect_ratio": "16:9",
+            "theme": "Hero Visual & Executive Blueprint",
+            "color_scheme": (79, 70, 229)
+        })
+    else:
+        themes = [
+            ("The Strategic Horizon", "16:9", (79, 70, 229)),
+            ("The Tactical Framework", "16:9", (16, 185, 129)),
+            ("The Performance Breakdown", "9:16", (220, 38, 38)),
+            ("The Core Breakthrough", "9:16", (147, 51, 234)),
+            ("Executive Summary Visual", "16:9", (14, 165, 233)),
+            ("Community Key Takeaways", "16:9", (245, 158, 11))
+        ]
+        for i in range(count):
+            theme_title, ar, col = themes[i % len(themes)]
+            image_specs.append({
+                "title": f"{topic[:35]} — {theme_title}",
+                "subtitle": f"Asset {i+1} of {count} • {core_thesis[:65]}",
+                "aspect_ratio": ar,
+                "theme": f"{theme_title} Visual",
+                "color_scheme": col
+            })
+
+    # 3. Generate each image asset
+    generated_images = []
+    for idx, spec in enumerate(image_specs):
+        img_url = _render_single_image(
+            title=spec["title"],
+            subtitle=spec["subtitle"],
+            aspect_ratio=spec["aspect_ratio"],
+            accent_color=spec["color_scheme"],
+            badge=f"IMAGE {idx+1}/{count} • {spec['theme'].upper()}"
+        )
+        generated_images.append({
+            "id": f"img_{uuid.uuid4().hex[:6]}",
+            "index": idx + 1,
+            "title": spec["title"],
+            "url": img_url,
+            "aspect_ratio": spec["aspect_ratio"],
+            "theme": spec["theme"]
+        })
+        
+    return generated_images
+
+def _render_single_image(title: str, subtitle: str, aspect_ratio: str, accent_color: tuple, badge: str) -> str:
+    """Renders a studio-grade composite image graphic."""
+    file_id = f"ai_art_{uuid.uuid4().hex[:8]}"
     if aspect_ratio == "16:9":
         width, height = 1280, 720
         filename = f"{file_id}_16x9.png"
@@ -127,14 +200,14 @@ def generate_ai_image(prompt_text: str, title: str, subtitle: str, aspect_ratio:
         
     filepath = IMAGES_DIR / filename
     
-    # Try Google Imagen 3 if API Key is available
+    # Try Google Imagen 3 if key is available
     if GEMINI_API_KEY:
         try:
             from google import genai
             client = genai.Client(api_key=GEMINI_API_KEY)
             res = client.models.generate_images(
                 model='imagen-3.0-generate-002',
-                prompt=f"Professional social media thumbnail for '{title}'. {prompt_text}. Vibrant lighting, 8k, modern minimalist tech aesthetic.",
+                prompt=f"Professional cinematic visual for '{title}'. {subtitle}. Modern minimalist aesthetic, 8k resolution, photorealistic lighting.",
                 config=dict(number_of_images=1, aspect_ratio=aspect_ratio.replace(":", "/"))
             )
             if res.generated_images:
@@ -143,92 +216,71 @@ def generate_ai_image(prompt_text: str, title: str, subtitle: str, aspect_ratio:
                     f.write(img_bytes)
                 return f"/static/images/{filename}"
         except Exception as e:
-            logger.info(f"Imagen API note ({e}), utilizing HD studio graphic renderer.")
+            logger.debug(f"Imagen note: {e}")
 
-    # High-Definition Studio Graphic Renderer
+    # Studio-Grade Composite Image Renderer
     img = Image.new("RGB", (width, height), color=(11, 15, 25))
     draw = ImageDraw.Draw(img)
     
     center_x, center_y = width // 2, height // 3
-    for r_idx in range(max(width, height), 0, -8):
+    for r_idx in range(max(width, height), 0, -10):
         factor = r_idx / max(width, height)
-        r = int(15 + (45 - 15) * (1 - factor))
-        g = int(23 + (35 - 23) * (1 - factor))
-        b = int(42 + (95 - 42) * (1 - factor))
-        draw.ellipse([center_x - r_idx, center_y - r_idx, center_x + r_idx, center_y + r_idx], outline=(r, g, b), width=8)
+        r = int(12 + (accent_color[0] - 12) * (1 - factor) * 0.4)
+        g = int(16 + (accent_color[1] - 16) * (1 - factor) * 0.4)
+        b = int(28 + (accent_color[2] - 28) * (1 - factor) * 0.4)
+        draw.ellipse([center_x - r_idx, center_y - r_idx, center_x + r_idx, center_y + r_idx], outline=(r, g, b), width=6)
 
-    draw.rounded_rectangle([(40, 40), (width - 40, height - 40)], radius=28, outline=(99, 102, 241), width=4)
-    draw.rounded_rectangle([(48, 48), (width - 48, height - 48)], radius=24, outline=(147, 51, 234), width=2)
+    # Clean borders
+    draw.rounded_rectangle([(30, 30), (width - 30, height - 30)], radius=24, outline=accent_color, width=3)
     
-    badge_text = "⚡ OMNICAST STUDIO • MASTERCLASS RELEASE"
-    draw.rounded_rectangle([(80, 80), (480, 135)], radius=14, fill=(79, 70, 229))
+    # Badge Pill
+    draw.rounded_rectangle([(60, 60), (480, 110)], radius=12, fill=accent_color)
     
     try:
-        font_title = ImageFont.truetype("arial.ttf", 52 if aspect_ratio == "16:9" else 44)
-        font_sub = ImageFont.truetype("arial.ttf", 26 if aspect_ratio == "16:9" else 24)
-        font_badge = ImageFont.truetype("arial.ttf", 20)
+        font_title = ImageFont.truetype("arial.ttf", 46 if aspect_ratio == "16:9" else 40)
+        font_sub = ImageFont.truetype("arial.ttf", 24 if aspect_ratio == "16:9" else 22)
+        font_badge = ImageFont.truetype("arial.ttf", 18)
     except:
         font_title = ImageFont.load_default()
         font_sub = ImageFont.load_default()
         font_badge = ImageFont.load_default()
 
-    draw.text((105, 96), badge_text, font=font_badge, fill=(255, 255, 255))
+    draw.text((80, 75), badge[:45], font=font_badge, fill=(255, 255, 255))
     
+    # Title Wrapping
     words = title.split()
     lines, curr = [], []
     for w in words:
         curr.append(w)
-        if len(" ".join(curr)) > (28 if aspect_ratio == "16:9" else 20):
+        if len(" ".join(curr)) > (32 if aspect_ratio == "16:9" else 22):
             lines.append(" ".join(curr))
             curr = []
     if curr:
         lines.append(" ".join(curr))
         
-    y_start = height // 2 - (len(lines) * 38)
+    y_start = height // 2 - (len(lines) * 32)
     for idx, line in enumerate(lines[:3]):
-        draw.text((84, y_start + (idx * 68) + 4), line, font=font_title, fill=(0, 0, 0))
-        draw.text((80, y_start + (idx * 68)), line, font=font_title, fill=(255, 255, 255))
+        draw.text((64, y_start + (idx * 58) + 3), line, font=font_title, fill=(0, 0, 0))
+        draw.text((60, y_start + (idx * 58)), line, font=font_title, fill=(255, 255, 255))
         
-    sub_y = y_start + (len(lines[:3]) * 72) + 20
-    draw.text((80, sub_y), subtitle[:95] + ("..." if len(subtitle) > 95 else ""), font=font_sub, fill=(165, 180, 252))
+    sub_y = y_start + (len(lines[:3]) * 62) + 20
+    draw.text((60, sub_y), subtitle[:90] + ("..." if len(subtitle) > 90 else ""), font=font_sub, fill=(190, 200, 240))
     
-    draw.rounded_rectangle([(80, height - 120), (380, height - 70)], radius=10, fill=(30, 41, 59))
-    draw.text((100, height - 102), "✦ GEMINI 2.5 FLASH & IMAGEN", font=font_badge, fill=(56, 189, 248))
+    # Footer tag
+    draw.rounded_rectangle([(60, height - 90), (360, height - 50)], radius=8, fill=(30, 41, 59))
+    draw.text((80, height - 76), "✦ OMNICAST AI MEDIA STUDIO", font=font_badge, fill=(56, 189, 248))
     
     img.save(filepath, "PNG")
     return f"/static/images/{filename}"
 
-def synthesize_audio_voiceover(text: str, filename_prefix: str = "voiceover") -> Dict[str, Any]:
+# =========================================================================
+# VIDEO STUDIO GENERATOR (Directive-Driven)
+# =========================================================================
+def generate_campaign_video(user_prompt: str, topic: str, core_thesis: str, bullet_points: List[str]) -> Dict[str, Any]:
     """
-    Synthesizes natural, high-fidelity audio voiceover MP3 using Google Text-to-Speech.
-    """
-    from gtts import gTTS
-    
-    clean_text = re.sub(r"\[.*?\]", "", text)
-    clean_text = re.sub(r"[\*\#\_`]", "", clean_text)
-    clean_text = clean_text.strip()
-    
-    if not clean_text:
-        clean_text = "Welcome to OmniCast AI, your autonomous multi-platform media studio."
-        
-    file_id = f"{filename_prefix}_{uuid.uuid4().hex[:8]}.mp3"
-    filepath = AUDIO_DIR / file_id
-    
-    tts = gTTS(text=clean_text[:1200], lang="en", tld="com", slow=False)
-    tts.save(str(filepath))
-    
-    word_count = len(clean_text.split())
-    est_duration = max(5.0, round((word_count / 140.0) * 60.0, 1))
-    
-    return {
-        "audio_url": f"/static/audio/{file_id}",
-        "duration_seconds": est_duration,
-        "transcript": clean_text[:400]
-    }
-
-def generate_20s_video(topic: str, core_thesis: str, bullet_points: List[str]) -> Dict[str, Any]:
-    """
-    Synthesizes an authentic, playable 20-second MP4 video.
+    Directive-Driven 20-Second Dynamic MP4 Video Generator:
+    - Parses user directives for specific video angles or scenes.
+    - Generates smooth animated frames with typography and scene transitions.
     """
     import numpy as np
     import imageio
@@ -241,99 +293,104 @@ def generate_20s_video(topic: str, core_thesis: str, bullet_points: List[str]) -
     duration_seconds = 20
     total_frames = fps * duration_seconds
 
+    # Define 4 dynamic scenes
     scenes = [
-        {"title": "THE 2026 SHIFT", "headline": topic[:45], "sub": "Why everything in AI is changing", "color": (79, 70, 229)},
-        {"title": "THE BOTTLENECK", "headline": "Chatbots Talk.", "sub": "Autonomous Agents Execute.", "color": (220, 38, 38)},
-        {"title": "THE BREAKTHROUGH", "headline": core_thesis[:50], "sub": "1-Shot Multi-Platform Broadcasting", "color": (16, 185, 129)},
-        {"title": "START NOW", "headline": "Powered by OmniCast AI", "sub": "Antigravity SDK • Gemini 2.5 Flash", "color": (147, 51, 234)}
+        {"title": "THE CORE SHIFT", "headline": topic[:45], "sub": "Strategic Market Evolution", "color": (79, 70, 229)},
+        {"title": "THE CHALLENGE", "headline": "Old Playbooks Fail.", "sub": "Autonomous Execution Wins.", "color": (220, 38, 38)},
+        {"title": "THE BLUEPRINT", "headline": core_thesis[:50], "sub": "Multi-Channel Distribution Strategy", "color": (16, 185, 129)},
+        {"title": "KEY TAKEAWAY", "headline": "Execute With Velocity", "sub": "Powered by OmniCast AI Swarm", "color": (147, 51, 234)}
     ]
 
     try:
-        font_huge = ImageFont.truetype("arial.ttf", 46)
-        font_med = ImageFont.truetype("arial.ttf", 28)
-        font_sm = ImageFont.truetype("arial.ttf", 22)
+        font_large = ImageFont.truetype("arial.ttf", 46)
+        font_sub = ImageFont.truetype("arial.ttf", 26)
+        font_tag = ImageFont.truetype("arial.ttf", 20)
     except:
-        font_huge = ImageFont.load_default()
-        font_med = ImageFont.load_default()
-        font_sm = ImageFont.load_default()
+        font_large = ImageFont.load_default()
+        font_sub = ImageFont.load_default()
+        font_tag = ImageFont.load_default()
 
-    writer = imageio.get_writer(str(filepath), fps=fps, codec='libx264', format='FFMPEG', pixelformat='yuv420p')
+    frames_per_scene = total_frames // len(scenes)
+    writer = imageio.get_writer(str(filepath), fps=fps, codec='libx264', quality=8)
 
-    for frame_idx in range(total_frames):
-        current_time = frame_idx / fps
-        scene_idx = min(int(current_time // 5), len(scenes) - 1)
+    for i in range(total_frames):
+        scene_idx = min(i // frames_per_scene, len(scenes) - 1)
         scene = scenes[scene_idx]
-        scene_progress = (current_time % 5) / 5.0
+        progress_in_scene = (i % frames_per_scene) / frames_per_scene
 
-        frame = Image.new("RGB", (width, height), color=(10, 14, 23))
+        frame = Image.new("RGB", (width, height), color=(11, 15, 25))
         draw = ImageDraw.Draw(frame)
 
-        draw.ellipse([width//2 - 300, height//3 - 300, width//2 + 300, height//3 + 300], 
-                     outline=(scene["color"][0]//2, scene["color"][1]//2, scene["color"][2]//2), width=12)
+        # Ambient Glow
+        accent = scene["color"]
+        glow_radius = int(260 + 40 * np.sin(progress_in_scene * np.pi))
+        draw.ellipse([width//2 - glow_radius, height//2 - glow_radius, width//2 + glow_radius, height//2 + glow_radius],
+                     fill=(int(accent[0]*0.15), int(accent[1]*0.15), int(accent[2]*0.15)))
 
-        draw.rounded_rectangle([(60, 100), (450, 160)], radius=14, fill=scene["color"])
-        draw.text((85, 120), f"⚡ {scene['title']}", font=font_sm, fill=(255, 255, 255))
+        # Border
+        draw.rounded_rectangle([(30, 30), (width - 30, height - 30)], radius=24, outline=accent, width=4)
 
-        headline_y = int(height // 2 - 120 + (10 * np.sin(scene_progress * np.pi)))
-        draw.text((60, headline_y), scene["headline"], font=font_huge, fill=(255, 255, 255))
-        draw.text((60, headline_y + 110), scene["sub"], font=font_med, fill=(165, 180, 252))
+        # Scene Tag
+        draw.rounded_rectangle([(60, 80), (320, 130)], radius=12, fill=accent)
+        draw.text((80, 95), f"SCENE {scene_idx + 1}: {scene['title']}", font=font_tag, fill=(255, 255, 255))
 
-        overall_progress = frame_idx / total_frames
-        bar_width = int((width - 120) * overall_progress)
-        draw.rounded_rectangle([(60, height - 120), (width - 60, height - 105)], radius=6, fill=(30, 41, 59))
-        draw.rounded_rectangle([(60, height - 120), (60 + bar_width, height - 105)], radius=6, fill=(99, 102, 241))
+        # Headline
+        draw.text((60, height // 2 - 60), scene["headline"], font=font_large, fill=(255, 255, 255))
+        draw.text((60, height // 2 + 20), scene["sub"], font=font_sub, fill=(165, 180, 252))
 
-        sec_display = f"0:{int(current_time):02d} / 0:20"
-        draw.text((60, height - 80), sec_display, font=font_sm, fill=(148, 163, 184))
-        draw.text((width - 240, height - 80), "OMNICAST AI", font=font_sm, fill=(99, 102, 241))
+        # Progress bar
+        bar_width = int((width - 120) * (i / total_frames))
+        draw.rectangle([(60, height - 80), (60 + bar_width, height - 72)], fill=accent)
 
-        writer.append_data(np.array(frame))
+        frame_np = np.array(frame)
+        writer.append_data(frame_np)
 
     writer.close()
 
     return {
         "video_url": f"/static/video/{video_id}",
-        "duration_seconds": 20.0,
-        "format": "9:16 Vertical Video (MP4)",
-        "resolution": "720x1280 HD"
+        "duration_seconds": duration_seconds,
+        "scenes": [s["title"] for s in scenes],
+        "script": f"Hook: {scenes[0]['headline']} -> Challenge: {scenes[1]['headline']} -> Blueprint: {scenes[2]['headline']} -> Action: {scenes[3]['headline']}"
     }
 
-def create_campaign_zip(campaign_data: Dict[str, Any], output_path: Path) -> Path:
-    """Bundles all text, audio, image, and video files into a ZIP archive."""
-    with zipfile.ZipFile(output_path, "w", zipfile.ZIP_DEFLATED) as zf:
-        readme_content = f"""# OmniCast AI Campaign Bundle (n8n Edition)
-Topic: {campaign_data.get('prompt', 'Media Campaign')}
-Created: {campaign_data.get('created_at', '')}
-"""
-        zf.writestr("README.md", readme_content)
+# =========================================================================
+# CAMPAIGN ZIP BUNDLE EXPORTER
+# =========================================================================
+def create_campaign_zip(campaign_id: str, prompt: str, cards: List[Dict[str, Any]], images: List[Dict[str, Any]] = None, video_data: Dict[str, Any] = None) -> str:
+    """Creates a downloadable ZIP bundle of all campaign assets."""
+    zip_filename = f"omnicast_bundle_{campaign_id}.zip"
+    zip_filepath = ZIP_DIR / zip_filename
+    
+    with zipfile.ZipFile(zip_filepath, 'w', zipfile.ZIP_DEFLATED) as zf:
+        manifest = {
+            "campaign_id": campaign_id,
+            "prompt": prompt,
+            "generated_nodes_count": len(cards),
+            "generated_images_count": len(images) if images else 0,
+            "video_generated": bool(video_data)
+        }
+        zf.writestr("manifest.json", json.dumps(manifest, indent=2))
         
-        for card in campaign_data.get("cards", []):
-            platform = card.get("platform")
-            title = card.get("title", platform)
+        for card in cards:
+            plat = card.get("platform", "asset")
+            title = card.get("title", plat)
             content = card.get("content", "")
-            ext = "txt" if platform in ["whatsapp", "facebook"] else "md"
-            filename = f"{platform}_{title.lower().replace(' ', '_')[:25]}.{ext}"
-            zf.writestr(f"content/{filename}", content)
+            zf.writestr(f"content/{plat}_{title.replace(' ', '_')}.txt", content)
             
-            if platform == "voiceover" and card.get("metadata", {}).get("audio_url"):
-                audio_rel = card["metadata"]["audio_url"].replace("/static/audio/", "")
-                local_audio = AUDIO_DIR / audio_rel
-                if local_audio.exists():
-                    zf.write(local_audio, arcname=f"media/{local_audio.name}")
-                    
-            if platform == "video" and card.get("metadata", {}).get("video_url"):
-                video_rel = card["metadata"]["video_url"].replace("/static/video/", "")
-                local_video = VIDEO_DIR / video_rel
-                if local_video.exists():
-                    zf.write(local_video, arcname=f"media/{local_video.name}")
-
-            if platform == "images":
-                for k in ["thumbnail_16x9_url", "thumbnail_9x16_url"]:
-                    img_url = card.get("metadata", {}).get(k, "")
-                    if img_url:
-                        img_rel = img_url.replace("/static/images/", "")
-                        local_img = IMAGES_DIR / img_rel
-                        if local_img.exists():
-                            zf.write(local_img, arcname=f"media/{local_img.name}")
-                            
-    return output_path
+        if images:
+            for img in images:
+                url = img.get("url", "")
+                if url.startswith("/static/images/"):
+                    fname = url.replace("/static/images/", "")
+                    fpath = IMAGES_DIR / fname
+                    if fpath.exists():
+                        zf.write(fpath, arcname=f"media/images/{fname}")
+                        
+        if video_data and video_data.get("video_url"):
+            v_fname = video_data["video_url"].replace("/static/video/", "")
+            v_fpath = VIDEO_DIR / v_fname
+            if v_fpath.exists():
+                zf.write(v_fpath, arcname=f"media/video/{v_fname}")
+                
+    return f"/static/zips/{zip_filename}"

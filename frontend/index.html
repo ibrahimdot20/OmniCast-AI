@@ -27,9 +27,9 @@
   <!-- Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <!-- Stylesheet -->
-  <link rel="stylesheet" href="styles.css?v=6.6">
+  <link rel="stylesheet" href="styles.css?v=8.3">
 </head>
-<body class="min-h-screen flex flex-col n8n-canvas-grid selection:bg-indigo-100 selection:text-indigo-900">
+<body class="min-h-screen flex flex-col studio-canvas selection:bg-indigo-100 selection:text-indigo-900">
 
   <!-- TOP HEADER -->
   <header class="sticky top-0 z-40 bg-white/85 dark:bg-gray-900/85 backdrop-blur-md border-b border-slate-200 dark:border-gray-800 transition-colors">
@@ -42,16 +42,29 @@
         </div>
         <div>
           <span class="font-bold text-lg tracking-tight text-slate-900 dark:text-white">OmniCast AI</span>
-          <p class="text-xs text-slate-500 dark:text-slate-400">Autonomous Multi-Platform Studio Agent</p>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Autonomous Multi-Platform Studio Swarm</p>
         </div>
       </div>
 
       <!-- Header Controls -->
-      <div class="flex items-center space-x-3">
+      <div class="flex items-center space-x-2.5">
+        <!-- History / Saved Campaigns Button -->
+        <button onclick="toggleHistoryDrawer()" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-gray-700 shadow-sm transition-all">
+          <i class="fa-solid fa-clock-rotate-left text-indigo-500"></i>
+          <span>History</span>
+          <span id="historyCountBadge" class="ml-1 px-1.5 py-0.2 text-[10px] rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300">0</span>
+        </button>
+
+        <!-- Fresh Start / Create New Button -->
+        <button id="createNewBtn" onclick="resetForNewCampaign()" class="hidden items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all">
+          <i class="fa-solid fa-plus"></i>
+          <span>Create New</span>
+        </button>
+
         <!-- Download ZIP Bundle -->
         <button id="downloadBundleBtn" onclick="downloadCampaignBundle()" class="hidden items-center space-x-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-all">
           <i class="fa-solid fa-file-zipper"></i>
-          <span>Download All (.ZIP)</span>
+          <span>Export ZIP</span>
         </button>
 
         <!-- Theme Toggle -->
@@ -73,7 +86,7 @@
           <textarea 
             id="promptInput" 
             rows="2" 
-            placeholder="Enter any topic, product launch, brand instructions, or paste a URL..."
+            placeholder="Enter your task, I am ready"
             class="flex-1 px-4 py-3 rounded-xl text-slate-900 dark:text-white bg-slate-50 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-xs sm:text-sm outline-none resize-none transition-all"
           ></textarea>
 
@@ -87,20 +100,6 @@
             <i class="fa-solid fa-play text-xs"></i>
             <span>Go</span>
           </button>
-        </div>
-
-        <!-- Tone Selector Row -->
-        <div class="flex items-center justify-between pt-1">
-          <div class="flex items-center space-x-3">
-            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Tone Profile:</span>
-            <select id="toneSelect" class="text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-slate-700 dark:text-slate-300 outline-none focus:border-indigo-500">
-              <option value="🚀 Viral Growth & High-Energy">🚀 Viral Growth & High-Energy</option>
-              <option value="💼 Executive & Thought Leader">💼 Executive & Thought Leader</option>
-              <option value="💡 Pragmatic & Actionable Guide">💡 Pragmatic & Actionable Guide</option>
-              <option value="🎙️ Storyteller & Narrative">🎙️ Storyteller & Narrative</option>
-              <option value="Auto-Detect">Auto-Detect from Prompt</option>
-            </select>
-          </div>
         </div>
 
         <!-- LIVE SWARM ACTIVITY LOG BAR -->
@@ -148,7 +147,7 @@
               </span>
             </div>
             <p id="snippet_research" class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-3 leading-snug">
-              Autonomous fact extraction, web crawling, and audience sentiment analysis.
+              Autonomous fact extraction, web crawling, and market intelligence.
             </p>
           </div>
           <div class="pt-2 border-t border-slate-100 dark:border-gray-800/80 flex items-center justify-end text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold">
@@ -180,7 +179,7 @@
               </span>
             </div>
             <p id="snippet_plan" class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-3 leading-snug">
-              Cross-platform narrative architecture, audience profiling, and tool routing.
+              Cross-platform narrative architecture, audience profiling, and strategy.
             </p>
           </div>
           <div class="pt-2 border-t border-slate-100 dark:border-gray-800/80 flex items-center justify-end text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold">
@@ -202,20 +201,20 @@
           <div>
             <div class="flex items-center justify-between mb-2">
               <div class="flex items-center space-x-2">
-                <span class="w-7 h-7 rounded-lg badge-fitting flex items-center justify-center text-xs shadow-sm">
-                  <i class="fa-solid fa-ruler-combined"></i>
+                <span class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xs shadow-sm">
+                  <i class="fa-solid fa-arrows-split-up-and-left"></i>
                 </span>
-                <span class="text-xs font-bold text-slate-900 dark:text-white truncate">Platform Adaptation Engine</span>
+                <span class="text-xs font-bold text-slate-900 dark:text-white truncate">Platform Adaptation Matrix</span>
               </div>
               <span id="status_pill_platform_fitting" class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-slate-100 dark:bg-gray-800 text-slate-500">
                 ⚪ Idle
               </span>
             </div>
             <p id="snippet_platform_fitting" class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-3 leading-snug">
-              Calibrating native character rules, hook architecture, white-space pacing, and engagement loops.
+              Calibrating hooks, limits, native syntax, and media assets.
             </p>
           </div>
-          <div class="pt-2 border-t border-slate-100 dark:border-gray-800/80 flex items-center justify-end text-[10px] text-sky-600 dark:text-sky-400 font-semibold">
+          <div class="pt-2 border-t border-slate-100 dark:border-gray-800/80 flex items-center justify-end text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
             <span class="flex items-center space-x-1 hover:underline">
               <span>Inspect</span>
               <i class="fa-solid fa-arrow-right text-[9px]"></i>
@@ -223,39 +222,41 @@
           </div>
         </div>
 
-        <!-- LEVEL 4: 6 PLATFORM NODES (GRID) -->
-        <div class="stage3-nodes-grid w-full">
+        <!-- LEVEL 4: 6 PLATFORM DISTRIBUTION NODES (SITTING LIKE EARLIER) -->
+        <div class="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
           
           <!-- Node 1: LinkedIn -->
-          <div id="node_linkedin" onclick="openDetailModal('linkedin')" class="workflow-node state-idle p-4 flex flex-col justify-between h-[160px]">
+          <div id="node_linkedin" onclick="openDetailModal('linkedin')" class="workflow-node state-idle p-3.5 flex flex-col justify-between h-[155px]">
             <div class="port-top"></div>
+            <div class="port-bottom"></div>
             <div>
               <div class="flex items-center justify-between mb-2">
-                <div class="flex items-center space-x-2">
+                <div class="flex items-center space-x-1.5">
                   <span class="w-6 h-6 rounded-lg badge-linkedin flex items-center justify-center text-xs shadow-sm"><i class="fa-brands fa-linkedin-in"></i></span>
                   <span class="text-xs font-bold text-slate-900 dark:text-white truncate">LinkedIn</span>
                 </div>
                 <span id="status_pill_linkedin" class="px-1.5 py-0.5 text-[9px] font-bold rounded bg-slate-100 dark:bg-gray-800 text-slate-500">⚪ Idle</span>
               </div>
-              <p id="snippet_linkedin" class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-3 leading-snug">Executive thought leadership post.</p>
+              <p id="snippet_linkedin" class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-3 leading-snug">Thought leadership post.</p>
             </div>
-            <div class="pt-2 border-t border-slate-100 dark:border-gray-800 text-[10px] text-indigo-600 font-semibold flex justify-end">
+            <div class="pt-2 border-t border-slate-100 dark:border-gray-800 text-[10px] text-blue-600 font-semibold flex justify-end">
               <span class="hover:underline">Inspect →</span>
             </div>
           </div>
 
           <!-- Node 2: Twitter / X -->
-          <div id="node_twitter" onclick="openDetailModal('twitter')" class="workflow-node state-idle p-4 flex flex-col justify-between h-[160px]">
+          <div id="node_twitter" onclick="openDetailModal('twitter')" class="workflow-node state-idle p-3.5 flex flex-col justify-between h-[155px]">
             <div class="port-top"></div>
+            <div class="port-bottom"></div>
             <div>
               <div class="flex items-center justify-between mb-2">
-                <div class="flex items-center space-x-2">
+                <div class="flex items-center space-x-1.5">
                   <span class="w-6 h-6 rounded-lg badge-twitter flex items-center justify-center text-xs shadow-sm"><i class="fa-brands fa-x-twitter"></i></span>
                   <span class="text-xs font-bold text-slate-900 dark:text-white truncate">Twitter / X</span>
                 </div>
                 <span id="status_pill_twitter" class="px-1.5 py-0.5 text-[9px] font-bold rounded bg-slate-100 dark:bg-gray-800 text-slate-500">⚪ Idle</span>
               </div>
-              <p id="snippet_twitter" class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-3 leading-snug">Viral curiosity hook & thread.</p>
+              <p id="snippet_twitter" class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-3 leading-snug">7-Tweet viral thread.</p>
             </div>
             <div class="pt-2 border-t border-slate-100 dark:border-gray-800 text-[10px] text-indigo-600 font-semibold flex justify-end">
               <span class="hover:underline">Inspect →</span>
@@ -263,17 +264,18 @@
           </div>
 
           <!-- Node 3: WhatsApp -->
-          <div id="node_whatsapp" onclick="openDetailModal('whatsapp')" class="workflow-node state-idle p-4 flex flex-col justify-between h-[160px]">
+          <div id="node_whatsapp" onclick="openDetailModal('whatsapp')" class="workflow-node state-idle p-3.5 flex flex-col justify-between h-[155px]">
             <div class="port-top"></div>
+            <div class="port-bottom"></div>
             <div>
               <div class="flex items-center justify-between mb-2">
-                <div class="flex items-center space-x-2">
+                <div class="flex items-center space-x-1.5">
                   <span class="w-6 h-6 rounded-lg badge-whatsapp flex items-center justify-center text-xs shadow-sm"><i class="fa-brands fa-whatsapp"></i></span>
                   <span class="text-xs font-bold text-slate-900 dark:text-white truncate">WhatsApp</span>
                 </div>
                 <span id="status_pill_whatsapp" class="px-1.5 py-0.5 text-[9px] font-bold rounded bg-slate-100 dark:bg-gray-800 text-slate-500">⚪ Idle</span>
               </div>
-              <p id="snippet_whatsapp" class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-3 leading-snug">Formatted direct broadcast.</p>
+              <p id="snippet_whatsapp" class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-3 leading-snug">Direct broadcast message.</p>
             </div>
             <div class="pt-2 border-t border-slate-100 dark:border-gray-800 text-[10px] text-emerald-600 font-semibold flex justify-end">
               <span class="hover:underline">Inspect →</span>
@@ -281,11 +283,12 @@
           </div>
 
           <!-- Node 4: Newsletter -->
-          <div id="node_newsletter" onclick="openDetailModal('newsletter')" class="workflow-node state-idle p-4 flex flex-col justify-between h-[160px]">
+          <div id="node_newsletter" onclick="openDetailModal('newsletter')" class="workflow-node state-idle p-3.5 flex flex-col justify-between h-[155px]">
             <div class="port-top"></div>
+            <div class="port-bottom"></div>
             <div>
               <div class="flex items-center justify-between mb-2">
-                <div class="flex items-center space-x-2">
+                <div class="flex items-center space-x-1.5">
                   <span class="w-6 h-6 rounded-lg badge-newsletter flex items-center justify-center text-xs shadow-sm"><i class="fa-regular fa-envelope"></i></span>
                   <span class="text-xs font-bold text-slate-900 dark:text-white truncate">Newsletter</span>
                 </div>
@@ -299,17 +302,18 @@
           </div>
 
           <!-- Node 5: Facebook -->
-          <div id="node_facebook" onclick="openDetailModal('facebook')" class="workflow-node state-idle p-4 flex flex-col justify-between h-[160px]">
+          <div id="node_facebook" onclick="openDetailModal('facebook')" class="workflow-node state-idle p-3.5 flex flex-col justify-between h-[155px]">
             <div class="port-top"></div>
+            <div class="port-bottom"></div>
             <div>
               <div class="flex items-center justify-between mb-2">
-                <div class="flex items-center space-x-2">
+                <div class="flex items-center space-x-1.5">
                   <span class="w-6 h-6 rounded-lg badge-facebook flex items-center justify-center text-xs shadow-sm"><i class="fa-brands fa-facebook-f"></i></span>
                   <span class="text-xs font-bold text-slate-900 dark:text-white truncate">Facebook</span>
                 </div>
                 <span id="status_pill_facebook" class="px-1.5 py-0.5 text-[9px] font-bold rounded bg-slate-100 dark:bg-gray-800 text-slate-500">⚪ Idle</span>
               </div>
-              <p id="snippet_facebook" class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-3 leading-snug">Relatable community post.</p>
+              <p id="snippet_facebook" class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-3 leading-snug">Community narrative post.</p>
             </div>
             <div class="pt-2 border-t border-slate-100 dark:border-gray-800 text-[10px] text-blue-600 font-semibold flex justify-end">
               <span class="hover:underline">Inspect →</span>
@@ -317,11 +321,12 @@
           </div>
 
           <!-- Node 6: Instagram -->
-          <div id="node_instagram" onclick="openDetailModal('instagram')" class="workflow-node state-idle p-4 flex flex-col justify-between h-[160px]">
+          <div id="node_instagram" onclick="openDetailModal('instagram')" class="workflow-node state-idle p-3.5 flex flex-col justify-between h-[155px]">
             <div class="port-top"></div>
+            <div class="port-bottom"></div>
             <div>
               <div class="flex items-center justify-between mb-2">
-                <div class="flex items-center space-x-2">
+                <div class="flex items-center space-x-1.5">
                   <span class="w-6 h-6 rounded-lg badge-instagram flex items-center justify-center text-xs shadow-sm"><i class="fa-brands fa-instagram"></i></span>
                   <span class="text-xs font-bold text-slate-900 dark:text-white truncate">Instagram</span>
                 </div>
@@ -336,17 +341,91 @@
 
         </div>
 
+        <!-- LEVEL 5: AI MEDIA & CREATIVE STUDIO LAYER (SEPARATELY UNDER PLATFORM NODES) -->
+        <div class="w-full max-w-2xl grid grid-cols-1 sm:grid-cols-2 gap-4">
+          
+          <!-- Node 7: AI Images Studio (SEPARATE TIER) -->
+          <div id="node_images" onclick="openDetailModal('images')" class="workflow-node state-idle p-4 flex flex-col justify-between h-[155px]">
+            <div class="port-top"></div>
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center space-x-2">
+                  <span class="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xs shadow-sm"><i class="fa-solid fa-images"></i></span>
+                  <span class="text-xs font-bold text-slate-900 dark:text-white truncate">AI Images Studio</span>
+                </div>
+                <span id="status_pill_images" class="px-1.5 py-0.5 text-[9px] font-bold rounded bg-slate-100 dark:bg-gray-800 text-slate-500">⚪ Idle</span>
+              </div>
+              <p id="snippet_images" class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-3 leading-snug">Directive-driven visual asset suite.</p>
+            </div>
+            <div class="pt-2 border-t border-slate-100 dark:border-gray-800 text-[10px] text-amber-600 font-semibold flex justify-end">
+              <span class="hover:underline">Inspect Gallery →</span>
+            </div>
+          </div>
+
+          <!-- Node 8: AI Video Studio (SEPARATE TIER) -->
+          <div id="node_video" onclick="openDetailModal('video')" class="workflow-node state-idle p-4 flex flex-col justify-between h-[155px]">
+            <div class="port-top"></div>
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center space-x-2">
+                  <span class="w-7 h-7 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center text-xs shadow-sm"><i class="fa-solid fa-film"></i></span>
+                  <span class="text-xs font-bold text-slate-900 dark:text-white truncate">AI Video Studio</span>
+                </div>
+                <span id="status_pill_video" class="px-1.5 py-0.5 text-[9px] font-bold rounded bg-slate-100 dark:bg-gray-800 text-slate-500">⚪ Idle</span>
+              </div>
+              <p id="snippet_video" class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-3 leading-snug">20s dynamic vertical MP4 render.</p>
+            </div>
+            <div class="pt-2 border-t border-slate-100 dark:border-gray-800 text-[10px] text-rose-600 font-semibold flex justify-end">
+              <span class="hover:underline">Watch Video →</span>
+            </div>
+          </div>
+
+        </div>
+
       </div>
     </section>
 
   </main>
 
-  <!-- CENTERED DETAIL INSPECTION MODAL (TIGHT & CLEAN) -->
-  <div id="nodeDetailModal" class="hidden fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 sm:p-6">
-    <!-- Backdrop Overlay -->
+  <!-- SAVED CAMPAIGNS HISTORY DRAWER (SLIDE-OVER) -->
+  <div id="historyDrawer" class="hidden fixed inset-0 z-50 overflow-hidden">
+    <div class="absolute inset-0 modal-backdrop transition-opacity" onclick="toggleHistoryDrawer()"></div>
+    <div class="fixed inset-y-0 right-0 max-w-full flex pl-10">
+      <div class="w-screen max-w-md bg-white dark:bg-gray-900 shadow-2xl border-l border-slate-200 dark:border-gray-800 flex flex-col">
+        <!-- Header -->
+        <div class="px-6 py-5 border-b border-slate-200 dark:border-gray-800 flex items-center justify-between bg-slate-50/60 dark:bg-gray-900/60">
+          <div class="flex items-center space-x-2.5">
+            <span class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-sm shadow-sm">
+              <i class="fa-solid fa-clock-rotate-left"></i>
+            </span>
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white">Saved Campaigns</h3>
+              <p class="text-[11px] text-slate-500">Auto-saved history & restored runs</p>
+            </div>
+          </div>
+          <button onclick="toggleHistoryDrawer()" class="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+            <i class="fa-solid fa-xmark text-base"></i>
+          </button>
+        </div>
+
+        <!-- History List -->
+        <div id="historyListContainer" class="flex-1 overflow-y-auto p-6 space-y-3">
+          <div class="text-center py-12 text-slate-400 text-xs">No saved campaigns yet. Run a campaign to auto-save!</div>
+        </div>
+
+        <!-- Footer -->
+        <div class="p-4 border-t border-slate-200 dark:border-gray-800 bg-slate-50/60 dark:bg-gray-900/60 flex justify-between items-center">
+          <span id="historyTotalCount" class="text-xs text-slate-500">0 campaigns stored</span>
+          <button onclick="clearAllHistory()" class="text-xs text-rose-500 hover:text-rose-600 hover:underline">Clear All</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTERED DETAIL INSPECTION MODAL -->
+  <div id="nodeDetailModal" class="hidden fixed inset-0 z-50 overflow-hidden flex items-center justify-center p-4 sm:p-6">
     <div class="fixed inset-0 modal-backdrop transition-opacity" onclick="closeDetailModal()"></div>
     
-    <!-- Modal Card (Centered in display) -->
     <div class="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-gray-800 w-full max-w-2xl max-h-[85vh] flex flex-col z-10 overflow-hidden transform transition-all animate-modal">
       
       <!-- Modal Header -->
@@ -383,11 +462,8 @@
 
       <!-- Modal Content Body -->
       <div class="flex-1 overflow-y-auto px-6 py-5 text-xs sm:text-sm">
-        
-        <!-- Formatted View (Tight typography) -->
         <div id="modalContentView" class="prose-tight text-slate-800 dark:text-slate-200 leading-relaxed"></div>
 
-        <!-- Inline Edit View -->
         <div id="modalEditView" class="hidden space-y-3">
           <textarea id="modalEditTextarea" rows="12" class="w-full p-4 rounded-xl text-xs sm:text-sm bg-slate-50 dark:bg-gray-800 border border-slate-300 dark:border-gray-700 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500 font-mono"></textarea>
           <div class="flex justify-end space-x-2">
@@ -395,10 +471,9 @@
             <button onclick="saveModalEdit()" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm">Save Changes</button>
           </div>
         </div>
-
       </div>
 
-      <!-- Modal Footer (Compact Re-roll bar) -->
+      <!-- Modal Footer (Re-roll bar) -->
       <div class="px-6 py-3 border-t border-slate-200 dark:border-gray-800 bg-slate-50/60 dark:bg-gray-900/60 flex items-center gap-2">
         <input 
           type="text" 
@@ -419,6 +494,6 @@
   <div id="toastContainer" class="fixed bottom-6 right-6 z-50 space-y-2 pointer-events-none"></div>
 
   <!-- APPLICATION SCRIPT -->
-  <script src="app.js?v=6.6"></script>
+  <script src="app.js?v=8.3"></script>
 </body>
 </html>

@@ -14,11 +14,13 @@ STATIC_DIR = BASE_DIR / "static"
 AUDIO_DIR = STATIC_DIR / "audio"
 IMAGES_DIR = STATIC_DIR / "images"
 VIDEO_DIR = STATIC_DIR / "video"
+ZIP_DIR = STATIC_DIR / "zips"
 
 # Ensure directories exist
 AUDIO_DIR.mkdir(parents=True, exist_ok=True)
 IMAGES_DIR.mkdir(parents=True, exist_ok=True)
 VIDEO_DIR.mkdir(parents=True, exist_ok=True)
+ZIP_DIR.mkdir(parents=True, exist_ok=True)
 
 # API Keys & Configurations
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or ""

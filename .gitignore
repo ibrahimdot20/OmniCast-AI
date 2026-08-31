@@ -32,7 +32,12 @@ backend/app/static/audio/*.mp3
 backend/app/static/images/*.png
 backend/app/static/video/*.mp4
 backend/app/static/*.zip
+backend/static/images/*.png
+backend/static/video/*.mp4
+backend/static/zips/*.zip
+backend/static/audio/*.mp3
 !backend/app/static/.gitkeep
+!backend/static/.gitkeep
 
 # IDE & OS files
 .vscode/

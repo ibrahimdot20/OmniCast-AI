@@ -4,16 +4,19 @@ import sys
 
 sys.stdout.reconfigure(encoding='utf-8')
 
-url = "https://omnicast-ai-296127548041.us-central1.run.app/api/forge-stream"
+url = "http://127.0.0.1:8080/api/forge-stream"
 payload = {
-    "prompt": "How to scale a B2B SaaS from $0 to $50k MRR in 2026: Tactical Customer Acquisition, Zero Paid Ads, and High-Ticket Tiering",
-    "tone": "Authoritative & Action-Oriented",
-    "include_media": False
+    "prompt": "The 2026 Autonomous AI Agent Revolution: Create 3 images showing agent workflows, and break down why multi-agent orchestration beats single LLMs.",
+    "tone": "🚀 Viral Growth & High-Energy",
+    "include_media": True
 }
 
-print("Connecting to live Cloud Run SSE stream (/api/forge-stream)...")
+print("="*60)
+print("TESTING LOCAL 11-NODE PIPELINE (http://127.0.0.1:8080)")
+print("="*60)
+
 r = requests.post(url, json=payload, stream=True, timeout=120)
-print(f"Status: {r.status_code}\n")
+print(f"Connection Status: {r.status_code}\n")
 
 cards = []
 current_event = None
@@ -38,17 +41,18 @@ for line in r.iter_lines():
                 card = json.loads(data_str)
                 cards.append(card)
                 print(f"✓ [{card.get('platform', '').upper()}] ({len(card.get('content', ''))} chars) -> {card.get('title')}")
+                if card.get("platform") == "images":
+                    meta = card.get("metadata", {})
+                    print(f"   🖼️ Images Generated: {meta.get('count', 0)} assets")
+                elif card.get("platform") == "video":
+                    meta = card.get("metadata", {})
+                    print(f"   🎬 Video URL: {meta.get('video_url')} ({meta.get('duration_seconds')}s)")
             except:
                 pass
         elif current_event == "complete":
-            print("\n✨ [PIPELINE RUN COMPLETE]")
+            print("\n✨ [SWARM RUN COMPLETE]")
             break
 
-print("\n" + "="*50)
-print(f"TOTAL NODES GENERATED & VERIFIED: {len(cards)} / 9")
-print("="*50)
-if cards:
-    sample = [c for c in cards if c.get("platform") == "linkedin"]
-    if sample:
-        print("\n--- SAMPLE CONTENT (LINKEDIN POST) ---")
-        print(sample[0].get("content")[:600] + "...\n")
+print("\n" + "="*60)
+print(f"TOTAL NODES GENERATED & PASSED: {len(cards)} / 11")
+print("="*60)
