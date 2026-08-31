@@ -57,6 +57,34 @@ async def health_check():
         "engine": "Antigravity Swarm (n8n Workflow Edition)"
     }
 
+@app.get("/api/debug-gemini")
+async def debug_gemini():
+    from app.config import GEMINI_API_KEY, MODEL_NAME
+    import traceback
+    try:
+        from google import genai
+        from google.genai import types
+        client = genai.Client(api_key=GEMINI_API_KEY)
+        res = client.models.generate_content(
+            model=MODEL_NAME or "gemini-3.6-flash",
+            contents="Say 'OMNICAST_ONLINE_OK'",
+            config=types.GenerateContentConfig(temperature=0.1)
+        )
+        return {
+            "status": "success",
+            "model": MODEL_NAME,
+            "api_key_prefix": GEMINI_API_KEY[:8] + "...",
+            "response": res.text
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "model": MODEL_NAME,
+            "api_key_prefix": GEMINI_API_KEY[:8] if GEMINI_API_KEY else "NONE",
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
+
 @app.get("/api/samples")
 async def get_sample_presets():
     return {"samples": SAMPLE_CAMPAIGNS}
