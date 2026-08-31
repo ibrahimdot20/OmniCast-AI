@@ -62,6 +62,7 @@ async def debug_gemini():
     from app.config import GEMINI_API_KEY, MODEL_NAME
     import traceback
     try:
+        os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "False"
         from google import genai
         from google.genai import types
         client = genai.Client(api_key=GEMINI_API_KEY)

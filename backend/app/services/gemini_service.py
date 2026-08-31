@@ -42,6 +42,7 @@ def call_gemini(prompt: str, system_instruction: Optional[str] = None, json_mode
     # ---------------------------------------------------------
     if api_key:
         try:
+            os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "False"
             from google import genai
             from google.genai import types
 
