@@ -30,15 +30,12 @@ def extract_clean_topic(text: str) -> str:
 
 def call_gemini(prompt: str, system_instruction: Optional[str] = None, json_mode: bool = False) -> str:
     """
-    Executes a prompt using Google GenAI SDK.
-    Priority 1: Google AI Studio API Key (GEMINI_API_KEY)
-    Priority 2: Vertex AI (Google Cloud Run IAM)
-    Priority 3: Dynamic Heuristic Generation
+    Executes a prompt exclusively using Google AI Studio API (google-genai SDK).
     """
     api_key = GEMINI_API_KEY or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     
     # ---------------------------------------------------------
-    # PRIORITY 1: Google AI Studio API Key
+    # Google AI Studio API Execution
     # ---------------------------------------------------------
     if api_key:
         try:
@@ -72,44 +69,13 @@ def call_gemini(prompt: str, system_instruction: Optional[str] = None, json_mode
                         logger.info(f"Google AI Studio ({model}) successfully generated response!")
                         return response.text.strip()
                 except Exception as model_err:
-                    logger.debug(f"AI Studio {model} attempt: {model_err}")
+                    logger.debug(f"Google AI Studio {model} attempt: {model_err}")
                     continue
         except Exception as k_err:
             logger.warning(f"Google AI Studio client initialization note: {k_err}")
 
     # ---------------------------------------------------------
-    # PRIORITY 2: Vertex AI (Google Cloud Run IAM fallback)
-    # ---------------------------------------------------------
-    try:
-        from google import genai
-        from google.genai import types
-
-        gcp_project = os.getenv("GOOGLE_CLOUD_PROJECT") or os.getenv("GCP_PROJECT") or "gen-lang-client-0504809160"
-        client = genai.Client(vertexai=True, project=gcp_project, location="us-central1")
-        
-        config = types.GenerateContentConfig(
-            temperature=0.7,
-            system_instruction=system_instruction,
-            response_mime_type="application/json" if json_mode else "text/plain"
-        )
-        
-        for model in ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]:
-            try:
-                response = client.models.generate_content(
-                    model=model,
-                    contents=prompt,
-                    config=config,
-                )
-                if response.text and response.text.strip():
-                    logger.info(f"Vertex AI ({model}) generated response successfully!")
-                    return response.text.strip()
-            except Exception:
-                continue
-    except Exception as v_err:
-        logger.debug(f"Vertex AI bypass: {v_err}")
-
-    # ---------------------------------------------------------
-    # PRIORITY 3: Dynamic Bespoke Generation
+    # Fallback: Dynamic Bespoke Generation
     # ---------------------------------------------------------
     return get_simulated_response(prompt, system_instruction, json_mode)
 
