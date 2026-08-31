@@ -3,11 +3,14 @@ import re
 import uuid
 import zipfile
 import logging
+import warnings
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 import requests
 from bs4 import BeautifulSoup
 from PIL import Image, ImageDraw, ImageFont
+
+warnings.filterwarnings("ignore")
 
 from app.config import AUDIO_DIR, IMAGES_DIR, VIDEO_DIR, GEMINI_API_KEY
 
@@ -15,56 +18,98 @@ logger = logging.getLogger("omnicast.tools")
 
 def search_live_web(query: str, max_results: int = 5) -> str:
     """
-    Performs real-time live internet web search using DuckDuckGo Search.
-    Returns synthesized web snippets, facts, and source URLs.
+    Performs real-time live internet web search.
     """
     try:
         from duckduckgo_search import DDGS
         with DDGS() as ddgs:
             results = list(ddgs.text(query, max_results=max_results))
-            if not results:
-                return f"No live search results found for query: {query}"
-                
-            formatted = []
-            for i, r in enumerate(results, 1):
-                title = r.get("title", "")
-                snippet = r.get("body", "")
-                url = r.get("href", "")
-                formatted.append(f"Result {i}:\nTitle: {title}\nSummary: {snippet}\nSource URL: {url}")
-                
-            return "\n\n".join(formatted)
+            if results:
+                formatted = []
+                for i, r in enumerate(results, 1):
+                    title = r.get("title", "")
+                    snippet = r.get("body", "")
+                    url = r.get("href", "")
+                    formatted.append(f"• Title: {title}\n  Summary: {snippet}\n  URL: {url}")
+                return "\n\n".join(formatted)
     except Exception as e:
-        logger.warning(f"DuckDuckGo search note: {e}. Trying direct search fallback...")
-        try:
-            headers = {"User-Agent": "Mozilla/5.0"}
-            resp = requests.get(f"https://html.duckduckgo.com/html/?q={requests.utils.quote(query)}", headers=headers, timeout=8)
-            soup = BeautifulSoup(resp.text, "html.parser")
-            snippets = [s.get_text(strip=True) for s in soup.find_all("a", class_="result__snippet")[:4]]
-            if snippets:
-                return "\n".join([f"• {s}" for s in snippets])
-        except Exception as fb_err:
-            logger.error(f"Search fallback error: {fb_err}")
-            
-        return f"Live web search context for: {query}"
+        logger.debug(f"DuckDuckGo primary search notice: {e}")
+        
+    try:
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+        resp = requests.get(f"https://html.duckduckgo.com/html/?q={requests.utils.quote(query)}", headers=headers, timeout=8)
+        soup = BeautifulSoup(resp.text, "html.parser")
+        snippets = [s.get_text(strip=True) for s in soup.find_all("a", class_="result__snippet")[:4]]
+        if snippets:
+            return "\n".join([f"• {s}" for s in snippets])
+    except Exception as fb_err:
+        logger.debug(f"Search HTML fallback note: {fb_err}")
+        
+    return f"Search data for query: {query}"
 
 def scrape_url_content(url: str) -> str:
-    """Fetches and cleans readable text from any web URL."""
+    """Fetches and extracts clean readable text from any web URL."""
     try:
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
-        resp = requests.get(url, headers=headers, timeout=10)
+        resp = requests.get(url, headers=headers, timeout=8)
         resp.raise_for_status()
         
         soup = BeautifulSoup(resp.text, "html.parser")
-        for tag in soup(["script", "style", "nav", "footer", "header", "noscript", "aside"]):
+        for tag in soup(["script", "style", "nav", "footer", "header", "noscript", "aside", "form"]):
             tag.decompose()
             
         paragraphs = [p.get_text(strip=True) for p in soup.find_all(["p", "h1", "h2", "h3", "li"])]
-        content = " ".join([p for p in paragraphs if len(p) > 20])
-        return content[:3500] if content else "No readable text extracted from URL."
+        content = " ".join([p for p in paragraphs if len(p) > 25])
+        return content[:3000] if content else "No readable body text extracted from URL."
     except Exception as e:
-        return f"Could not scrape URL ({str(e)}). Proceeding with provided prompt."
+        return f"Could not scrape URL ({str(e)})."
+
+def deep_multi_vector_search(topic: str) -> str:
+    """
+    Executes a Multi-Vector Deep Research Swarm:
+    1. Statistical & Fact Search
+    2. Tactical Strategy & Controversies
+    3. Latest 2026 Developments
+    4. Top URL Content Crawling
+    """
+    clean_topic = topic.split("\n")[0].strip()[:80]
+    
+    vectors = [
+        f"{clean_topic} statistics data facts 2026",
+        f"{clean_topic} strategy tactical guide analysis",
+        f"{clean_topic} latest news updates trends 2026"
+    ]
+    
+    collected_intelligence = []
+    discovered_urls = []
+    
+    for v in vectors:
+        try:
+            from duckduckgo_search import DDGS
+            with DDGS() as ddgs:
+                res = list(ddgs.text(v, max_results=3))
+                if res:
+                    for r in res:
+                        collected_intelligence.append(f"[{v.split()[-2].upper()} INTEL] {r.get('title', '')}: {r.get('body', '')}")
+                        if r.get("href") and len(discovered_urls) < 2 and not r.get("href").endswith(".pdf"):
+                            discovered_urls.append(r.get("href"))
+        except Exception:
+            continue
+            
+    # Deep crawl top 1-2 real web pages for in-depth source knowledge
+    scraped_page_text = []
+    for u in discovered_urls:
+        page_body = scrape_url_content(u)
+        if len(page_body) > 100:
+            scraped_page_text.append(f"--- SOURCE DEEP-DIVE ({u}) ---\n{page_body[:1500]}")
+            
+    full_dossier = "\n\n".join(collected_intelligence)
+    if scraped_page_text:
+        full_dossier += "\n\n" + "\n\n".join(scraped_page_text)
+        
+    return full_dossier if full_dossier.strip() else search_live_web(clean_topic, max_results=5)
 
 def generate_ai_image(prompt_text: str, title: str, subtitle: str, aspect_ratio: str = "16:9") -> str:
     """
@@ -115,7 +160,7 @@ def generate_ai_image(prompt_text: str, title: str, subtitle: str, aspect_ratio:
     draw.rounded_rectangle([(40, 40), (width - 40, height - 40)], radius=28, outline=(99, 102, 241), width=4)
     draw.rounded_rectangle([(48, 48), (width - 48, height - 48)], radius=24, outline=(147, 51, 234), width=2)
     
-    badge_text = "⚡ OMNICAST STUDIO • OFFICIAL RELEASE"
+    badge_text = "⚡ OMNICAST STUDIO • MASTERCLASS RELEASE"
     draw.rounded_rectangle([(80, 80), (480, 135)], radius=14, fill=(79, 70, 229))
     
     try:
@@ -148,7 +193,7 @@ def generate_ai_image(prompt_text: str, title: str, subtitle: str, aspect_ratio:
     draw.text((80, sub_y), subtitle[:95] + ("..." if len(subtitle) > 95 else ""), font=font_sub, fill=(165, 180, 252))
     
     draw.rounded_rectangle([(80, height - 120), (380, height - 70)], radius=10, fill=(30, 41, 59))
-    draw.text((100, height - 102), "✦ GEMINI 3.7 FLASH & IMAGEN", font=font_badge, fill=(56, 189, 248))
+    draw.text((100, height - 102), "✦ GEMINI 2.5 FLASH & IMAGEN", font=font_badge, fill=(56, 189, 248))
     
     img.save(filepath, "PNG")
     return f"/static/images/{filename}"
@@ -200,7 +245,7 @@ def generate_20s_video(topic: str, core_thesis: str, bullet_points: List[str]) -
         {"title": "THE 2026 SHIFT", "headline": topic[:45], "sub": "Why everything in AI is changing", "color": (79, 70, 229)},
         {"title": "THE BOTTLENECK", "headline": "Chatbots Talk.", "sub": "Autonomous Agents Execute.", "color": (220, 38, 38)},
         {"title": "THE BREAKTHROUGH", "headline": core_thesis[:50], "sub": "1-Shot Multi-Platform Broadcasting", "color": (16, 185, 129)},
-        {"title": "START NOW", "headline": "Powered by OmniCast AI", "sub": "Antigravity SDK • Gemini 3.7 Flash", "color": (147, 51, 234)}
+        {"title": "START NOW", "headline": "Powered by OmniCast AI", "sub": "Antigravity SDK • Gemini 2.5 Flash", "color": (147, 51, 234)}
     ]
 
     try:
