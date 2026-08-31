@@ -30,17 +30,60 @@ def extract_clean_topic(text: str) -> str:
 
 def call_gemini(prompt: str, system_instruction: Optional[str] = None, json_mode: bool = False) -> str:
     """
-    Executes a prompt using Google GenAI SDK with Gemini 3.7 / 3.6 Flash.
-    Supports both Google AI Studio API Key and Cloud Run Vertex AI ADC.
+    Executes a prompt using Google GenAI SDK.
+    Priority 1: Google AI Studio API Key (GEMINI_API_KEY)
+    Priority 2: Vertex AI (Google Cloud Run IAM)
+    Priority 3: Dynamic Heuristic Generation
     """
     api_key = GEMINI_API_KEY or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     
-    # 1. Try Vertex AI (Native to Google Cloud Run with zero keys needed)
+    # ---------------------------------------------------------
+    # PRIORITY 1: Google AI Studio API Key
+    # ---------------------------------------------------------
+    if api_key:
+        try:
+            from google import genai
+            from google.genai import types
+
+            client = genai.Client(api_key=api_key)
+            
+            config = types.GenerateContentConfig(
+                temperature=0.7,
+                system_instruction=system_instruction,
+                response_mime_type="application/json" if json_mode else "text/plain"
+            )
+            
+            models_to_try = [
+                MODEL_NAME or "gemini-2.5-flash",
+                "gemini-2.5-flash",
+                "gemini-1.5-flash",
+                "gemini-2.0-flash",
+                "gemini-3.7-flash"
+            ]
+            
+            for model in models_to_try:
+                try:
+                    response = client.models.generate_content(
+                        model=model,
+                        contents=prompt,
+                        config=config,
+                    )
+                    if response.text and response.text.strip():
+                        logger.info(f"Google AI Studio ({model}) successfully generated response!")
+                        return response.text.strip()
+                except Exception as model_err:
+                    logger.debug(f"AI Studio {model} attempt: {model_err}")
+                    continue
+        except Exception as k_err:
+            logger.warning(f"Google AI Studio client initialization note: {k_err}")
+
+    # ---------------------------------------------------------
+    # PRIORITY 2: Vertex AI (Google Cloud Run IAM fallback)
+    # ---------------------------------------------------------
     try:
         from google import genai
         from google.genai import types
 
-        # On Cloud Run, Vertex AI authenticates via default service account automatically
         gcp_project = os.getenv("GOOGLE_CLOUD_PROJECT") or os.getenv("GCP_PROJECT") or "gen-lang-client-0504809160"
         client = genai.Client(vertexai=True, project=gcp_project, location="us-central1")
         
@@ -65,36 +108,9 @@ def call_gemini(prompt: str, system_instruction: Optional[str] = None, json_mode
     except Exception as v_err:
         logger.debug(f"Vertex AI bypass: {v_err}")
 
-    # 2. Try Google AI Studio with API Key if present
-    if api_key:
-        try:
-            from google import genai
-            from google.genai import types
-
-            client = genai.Client(api_key=api_key)
-            
-            config = types.GenerateContentConfig(
-                temperature=0.7,
-                system_instruction=system_instruction,
-                response_mime_type="application/json" if json_mode else "text/plain"
-            )
-            
-            for model in [MODEL_NAME or "gemini-3.7-flash", "gemini-3.6-flash", "gemini-2.5-flash", "gemini-2.0-flash"]:
-                try:
-                    response = client.models.generate_content(
-                        model=model,
-                        contents=prompt,
-                        config=config,
-                    )
-                    if response.text and response.text.strip():
-                        logger.info(f"Google AI Studio ({model}) generated response successfully!")
-                        return response.text.strip()
-                except Exception:
-                    continue
-        except Exception as k_err:
-            logger.debug(f"AI Studio bypass: {k_err}")
-
-    # 3. Dynamic Bespoke Synthesis using exact topic and live search data
+    # ---------------------------------------------------------
+    # PRIORITY 3: Dynamic Bespoke Generation
+    # ---------------------------------------------------------
     return get_simulated_response(prompt, system_instruction, json_mode)
 
 def get_simulated_response(prompt: str, system_instruction: Optional[str], json_mode: bool) -> str:
