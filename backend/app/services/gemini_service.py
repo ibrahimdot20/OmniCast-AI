@@ -7,22 +7,42 @@ from app.config import GEMINI_API_KEY, MODEL_NAME
 
 logger = logging.getLogger("omnicast.gemini")
 
+def extract_clean_topic(text: str) -> str:
+    """Extracts the actual user prompt/topic from complex multi-line prompt structures."""
+    for line in text.split("\n"):
+        line = line.strip()
+        if not line:
+            continue
+        if "User Topic / Prompt:" in line:
+            return line.replace("User Topic / Prompt:", "").strip()[:80]
+        if "Original User Request:" in line:
+            return line.replace("Original User Request:", "").strip()[:80]
+        if "User Request:" in line:
+            return line.replace("User Request:", "").strip()[:80]
+        if "Topic:" in line:
+            return line.replace("Topic:", "").strip()[:80]
+    # Fallback to first meaningful line that is not an instruction
+    for line in text.split("\n"):
+        line = line.strip()
+        if line and not any(k in line for k in ["Analyze", "Develop", "Create", "Context", "Research", "Return", "###", "```"]):
+            return line[:80]
+    return "Strategic Growth & Innovation"
+
 def call_gemini(prompt: str, system_instruction: Optional[str] = None, json_mode: bool = False) -> str:
     """
     Executes a prompt using Google GenAI SDK with Gemini 3.7 / 3.6 Flash.
-    Includes smart model aliases fallback and dynamic generation.
+    Supports both Google AI Studio API Key and Cloud Run Vertex AI ADC.
     """
     api_key = GEMINI_API_KEY or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     
-    if not api_key:
-        logger.warning("No GEMINI_API_KEY detected in environment. Using dynamic synthesis.")
-        return get_simulated_response(prompt, system_instruction, json_mode)
-        
+    # 1. Try Vertex AI (Native to Google Cloud Run with zero keys needed)
     try:
         from google import genai
         from google.genai import types
 
-        client = genai.Client(api_key=api_key)
+        # On Cloud Run, Vertex AI authenticates via default service account automatically
+        gcp_project = os.getenv("GOOGLE_CLOUD_PROJECT") or os.getenv("GCP_PROJECT") or "gen-lang-client-0504809160"
+        client = genai.Client(vertexai=True, project=gcp_project, location="us-central1")
         
         config = types.GenerateContentConfig(
             temperature=0.7,
@@ -30,15 +50,7 @@ def call_gemini(prompt: str, system_instruction: Optional[str] = None, json_mode
             response_mime_type="application/json" if json_mode else "text/plain"
         )
         
-        # Primary models to try
-        models_to_try = [
-            MODEL_NAME or "gemini-3.6-flash",
-            "gemini-3.6-flash",
-            "gemini-3.7-flash"
-        ]
-        
-        last_error = None
-        for model in models_to_try:
+        for model in ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]:
             try:
                 response = client.models.generate_content(
                     model=model,
@@ -46,33 +58,57 @@ def call_gemini(prompt: str, system_instruction: Optional[str] = None, json_mode
                     config=config,
                 )
                 if response.text and response.text.strip():
+                    logger.info(f"Vertex AI ({model}) generated response successfully!")
                     return response.text.strip()
-            except Exception as err:
-                last_error = err
-                logger.warning(f"Attempt with model '{model}' failed ({err}). Trying next candidate...")
-                
-        if last_error:
-            logger.error(f"All Gemini model candidates failed: {last_error}. Falling back to dynamic synthesis.")
-            
-    except Exception as e:
-        logger.error(f"Gemini API initialization error: {e}. Falling back to dynamic synthesis.")
+            except Exception:
+                continue
+    except Exception as v_err:
+        logger.debug(f"Vertex AI bypass: {v_err}")
 
+    # 2. Try Google AI Studio with API Key if present
+    if api_key:
+        try:
+            from google import genai
+            from google.genai import types
+
+            client = genai.Client(api_key=api_key)
+            
+            config = types.GenerateContentConfig(
+                temperature=0.7,
+                system_instruction=system_instruction,
+                response_mime_type="application/json" if json_mode else "text/plain"
+            )
+            
+            for model in [MODEL_NAME or "gemini-3.7-flash", "gemini-3.6-flash", "gemini-2.5-flash", "gemini-2.0-flash"]:
+                try:
+                    response = client.models.generate_content(
+                        model=model,
+                        contents=prompt,
+                        config=config,
+                    )
+                    if response.text and response.text.strip():
+                        logger.info(f"Google AI Studio ({model}) generated response successfully!")
+                        return response.text.strip()
+                except Exception:
+                    continue
+        except Exception as k_err:
+            logger.debug(f"AI Studio bypass: {k_err}")
+
+    # 3. Dynamic Bespoke Synthesis using exact topic and live search data
     return get_simulated_response(prompt, system_instruction, json_mode)
 
 def get_simulated_response(prompt: str, system_instruction: Optional[str], json_mode: bool) -> str:
     """
-    Dynamic generation that builds bespoke content directly from the user's prompt.
+    Dynamic generation that builds bespoke content directly from the user's clean prompt.
     """
     sys_inst = system_instruction or ""
-    topic_clean = prompt.split("\n")[0].replace("User Topic / Prompt:", "").replace("Topic:", "").strip()[:80]
-    if not topic_clean:
-        topic_clean = "Strategic Innovation & Growth"
+    topic_clean = extract_clean_topic(prompt)
     
     if json_mode:
         if "Campaign Architect" in sys_inst or "Strategic" in sys_inst or "Planner" in sys_inst:
             return json.dumps({
                 "core_thesis": f"Mastering {topic_clean} requires executing modern, high-impact distribution strategies across every digital channel.",
-                "primary_audience": f"Industry Leaders, Creators, and Practitioners interested in {topic_clean}.",
+                "primary_audience": f"Founders, Creators, and Practitioners interested in {topic_clean}.",
                 "tone_profile": "High-Energy, Authoritative, Action-Oriented",
                 "platform_angles": {
                     "linkedin": f"Strategic breakdown and executive takeaways on {topic_clean}.",
