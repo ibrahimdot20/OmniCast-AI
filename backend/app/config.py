@@ -24,7 +24,7 @@ ZIP_DIR.mkdir(parents=True, exist_ok=True)
 
 # API Keys & Configurations
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or ""
-MODEL_NAME = os.getenv("GEMINI_MODEL") or os.getenv("MODEL_NAME") or "gemini-3.6-flash"
+MODEL_NAME = os.getenv("GEMINI_MODEL") or os.getenv("MODEL_NAME") or "gemini-3.5-flash-lite"
 PORT = int(os.getenv("PORT", 8080))
 HOST = os.getenv("HOST", "0.0.0.0")
 

@@ -143,7 +143,70 @@ def get_simulated_response(prompt: str, system_instruction: Optional[str], json_
 * **Carousel Visual Flow:** Slide 1 Big Headline $\\rightarrow$ Slides 2-4 Step-by-Step Breakdown $\\rightarrow$ Slide 5 Save & Share CTA.
 * **Caption Structure:** Scannable emoji bullets + 15 targeted high-reach hashtags."""
 
-    if "LinkedIn" in sys_inst:
+    if "Newsletter" in sys_inst or "editorial" in sys_inst.lower():
+        return f"""### Subject Line Options
+* **Curiosity:** The unexpected shift happening in {topic_clean}
+* **Urgency:** Why legacy approaches to {topic_clean} are failing
+* **Framework:** The 3-Step Playbook for mastering {topic_clean} in 2026
+
+**Preview Text:** What you need to know about {topic_clean} right now.
+
+---
+
+Hey Reader,
+
+If you have been paying attention to **{topic_clean}**, you know the ground is shifting beneath our feet.
+
+## The Core Challenge
+Too many teams are still operating on playbooks from three years ago. The speed of execution has accelerated, and what used to work is now creating bottlenecks.
+
+## The Tactical Framework
+1. **Clarity Over Volume:** Identify the single metric that actually drives outcome.
+2. **Systematized Distribution:** Deliver high-value insights directly to the right audiences.
+3. **Continuous Iteration:** Test, adapt, and refine in real time.
+
+### The Big Takeaway
+Execution velocity beats theoretical perfection every single time.
+
+Until next time,  
+**The OmniCast Team**"""
+
+    if "WhatsApp" in sys_inst or "whatsapp" in sys_inst.lower():
+        return f"""*⚡ RAPID BRIEFING: The Truth About {topic_clean}*
+
+Hey everyone! 👋 Here is a quick tactical breakdown on *{topic_clean}* and what you need to know today:
+
+*Core Highlights:*
+• *Key Insight 1:* Major shifts are taking place across the industry right now.
+• *Key Insight 2:* Early adopters are seeing 5x-10x leverage by streamlining their execution.
+• *Action Step:* Audit your systems today and focus on high-impact priorities.
+
+👉 *Check out the complete breakdown here:* [https://omnicast-ai-296127548041.us-central1.run.app]
+
+Reply to this message with your thoughts! 🚀"""
+
+    if "Facebook" in sys_inst or "facebook" in sys_inst.lower():
+        return f"""It’s crazy how much the conversation around {topic_clean} has changed lately. 🤔
+
+Just a few years ago, this felt like an uphill battle that required massive teams and endless budgets. Today, with the right strategy and tools, a small team (or even a solo operator) can achieve results that used to take months.
+
+What’s been your biggest experience or challenge with {topic_clean}? Drop your thoughts below! 👇"""
+
+    if "Instagram" in sys_inst or "instagram" in sys_inst.lower():
+        return f"""The entire landscape around {topic_clean} is evolving rapidly. ⚡
+
+If you want to stay ahead in 2026, focus on high-leverage execution, authentic distribution, and clear systems. 
+
+Here are the 3 rules:
+1. Speed of implementation over theoretical perfection
+2. Direct-to-audience narrative clarity
+3. Ruthless consistency across your primary channels
+
+Drop a '🔥' in the comments if you agree, and save this post for later! 📌
+
+#{topic_clean.replace(' ', '')} #Strategy #Growth #CreatorEconomy #FutureOfWork #Productivity #Mindset"""
+
+    if "LinkedIn" in sys_inst or "linkedin" in sys_inst.lower():
         return f"""The biggest mistake professionals make with {topic_clean} is assuming old rules still apply.
 
 Here is what is actually moving the needle in 2026:
@@ -160,7 +223,7 @@ What has been your biggest lesson when navigating {topic_clean}?
 
 #{topic_clean.replace(' ', '')} #Leadership #Strategy #Innovation #Growth"""
 
-    if "Twitter" in sys_inst or "X" in sys_inst:
+    if "Twitter" in sys_inst or "Tweet" in sys_inst or "thread" in sys_inst.lower():
         return f"""Tweet 1/7:
 Most people get {topic_clean} completely backwards in 2026.
 
@@ -194,70 +257,7 @@ Found this valuable?
 • Bookmark 📌 for future reference
 • Follow for more deep breakdowns!"""
 
-    if "WhatsApp" in sys_inst:
-        return f"""*⚡ RAPID BRIEFING: The Truth About {topic_clean}*
-
-Hey everyone! 👋 Here is a quick tactical breakdown on *{topic_clean}* and what you need to know today:
-
-*Core Highlights:*
-• *Key Insight 1:* Major shifts are taking place across the industry right now.
-• *Key Insight 2:* Early adopters are seeing 5x-10x leverage by streamlining their execution.
-• *Action Step:* Audit your systems today and focus on high-impact priorities.
-
-👉 *Check out the complete breakdown here:* [https://omnicast-ai-296127548041.us-central1.run.app]
-
-Reply to this message with your thoughts! 🚀"""
-
-    if "Newsletter" in sys_inst:
-        return f"""### Subject Line Options
-* **Curiosity:** The unexpected shift happening in {topic_clean}
-* **Urgency:** Why legacy approaches to {topic_clean} are failing
-* **Framework:** The 3-Step Playbook for mastering {topic_clean} in 2026
-
-**Preview Text:** What you need to know about {topic_clean} right now.
-
----
-
-Hey Reader,
-
-If you have been paying attention to **{topic_clean}**, you know the ground is shifting beneath our feet.
-
-## The Core Challenge
-Too many teams are still operating on playbooks from three years ago. The speed of execution has accelerated, and what used to work is now creating bottlenecks.
-
-## The Tactical Framework
-1. **Clarity Over Volume:** Identify the single metric that actually drives outcome.
-2. **Systematized Distribution:** Deliver high-value insights directly to the right audiences.
-3. **Continuous Iteration:** Test, adapt, and refine in real time.
-
-### The Big Takeaway
-Execution velocity beats theoretical perfection every single time.
-
-Until next time,  
-**The OmniCast Team**"""
-
-    if "Facebook" in sys_inst:
-        return f"""It’s crazy how much the conversation around {topic_clean} has changed lately. 🤔
-
-Just a few years ago, this felt like an uphill battle that required massive teams and endless budgets. Today, with the right strategy and tools, a small team (or even a solo operator) can achieve results that used to take months.
-
-What’s been your biggest experience or challenge with {topic_clean}? Drop your thoughts below! 👇"""
-
-    if "Instagram" in sys_inst:
-        return f"""### 📸 5-Slide Instagram Carousel Blueprint: {topic_clean}
-
-* **Slide 1 (Cover):** "The Modern Guide to {topic_clean} in 2026" (Bold high-contrast minimalist typography)
-* **Slide 2 (The Problem):** Why legacy methods fail to produce results.
-* **Slide 3 (The Shift):** The new playbook for maximum leverage.
-* **Slide 4 (The 3 Rules):** Actionable execution steps to implement today.
-* **Slide 5 (CTA):** "Save this post for later 📌 & share with a friend!"
-
----
-
-**Caption:**
-The entire landscape around {topic_clean} is evolving rapidly. ⚡
-
-If you want to stay ahead, focus on high-leverage execution and clear distribution. Swipe through the carousel for the full breakdown! 👉
+    return f"Strategic analysis and multi-channel insights for: {topic_clean}"
 
 #{topic_clean.replace(' ', '')} #Strategy #Growth #Success #Innovation #Business"""
 
