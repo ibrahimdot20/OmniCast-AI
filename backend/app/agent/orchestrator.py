@@ -211,8 +211,25 @@ PLATFORM FITTING GUIDELINES:
                 "message": status_msg,
                 "agent": agent_name
             })
-            prompt = f"{base_context}\n\nTASK:\n{task_desc}"
-            raw = await asyncio.to_thread(call_gemini, prompt, sys_prompt)
+            
+            plat_strategy = plan.platform_angles.get(plat_key, '')
+            platform_specific_prompt = f"""USER PROMPT & DIRECTIVES:
+{req.prompt}
+
+CAMPAIGN GROUNDING:
+- Topic: {research.topic}
+- Core Thesis: {plan.core_thesis}
+- Tone Profile: {plan.tone_profile}
+- Target Audience: {plan.primary_audience}
+- Strategic Angle for {plat_title}: {plat_strategy}
+
+RESEARCH INTELLIGENCE & FACTS:
+{chr(10).join(['• ' + f for f in research.core_facts])}
+
+YOUR SPECIFIC TASK:
+{task_desc}"""
+
+            raw = await asyncio.to_thread(call_gemini, platform_specific_prompt, sys_prompt)
             card = PlatformCard(
                 id=f"card_{plat_key}_{campaign_id}",
                 platform=plat_key,
