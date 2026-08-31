@@ -57,10 +57,9 @@ def call_gemini(prompt: str, system_instruction: Optional[str] = None, json_mode
             )
             
             models_to_try = [
-                MODEL_NAME or "gemini-2.5-flash",
-                "gemini-2.5-flash",
+                MODEL_NAME or "gemini-3.6-flash",
+                "gemini-3.6-flash",
                 "gemini-1.5-flash",
-                "gemini-2.0-flash",
                 "gemini-3.7-flash"
             ]
             
