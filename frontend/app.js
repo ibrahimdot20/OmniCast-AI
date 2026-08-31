@@ -347,6 +347,7 @@ async function startCampaign() {
     const reader = response.body.getReader();
     const decoder = new TextDecoder('utf-8');
     let buffer = '';
+    let currentEvent = null;
 
     while (true) {
       const { done, value } = await reader.read();
@@ -354,14 +355,18 @@ async function startCampaign() {
 
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split('\n');
-      buffer = lines.pop();
+      buffer = lines.pop(); // Keep uncompleted line in buffer
 
-      let currentEvent = null;
       for (const line of lines) {
-        if (line.startsWith('event: ')) {
-          currentEvent = line.replace('event: ', '').trim();
-        } else if (line.startsWith('data: ')) {
-          const rawData = line.replace('data: ', '').trim();
+        const trimmed = line.trim();
+        if (!trimmed) {
+          currentEvent = null;
+          continue;
+        }
+        if (trimmed.startsWith('event:')) {
+          currentEvent = trimmed.slice(6).trim();
+        } else if (trimmed.startsWith('data:')) {
+          const rawData = trimmed.slice(5).trim();
           try {
             const data = JSON.parse(rawData);
             handlePipelineEvent(currentEvent, data);
@@ -385,29 +390,12 @@ async function startCampaign() {
 // SSE PIPELINE EVENT HANDLER
 // ----------------------------------------------------
 function handlePipelineEvent(event, data) {
+  if (!data) return;
   const activityMsg = document.getElementById('liveActivityMessage');
   const agentBadge = document.getElementById('activeAgentBadge');
 
-  if (event === 'status') {
-    if (activityMsg && data.message) activityMsg.innerText = data.message;
-    if (agentBadge && data.agent) agentBadge.innerText = data.agent;
-
-    if (data.stage === 'researching') {
-      setNodeState('research', 'running');
-    } else if (data.stage === 'planning') {
-      setNodeState('research', 'completed');
-      setNodeState('plan', 'running');
-    } else if (data.stage === 'platform_fitting') {
-      setNodeState('plan', 'completed');
-      setNodeState('platform_fitting', 'running');
-    } else if (data.stage.startsWith('generating_')) {
-      setNodeState('platform_fitting', 'completed');
-      const targetPlat = data.stage.replace('generating_', '');
-      if (VISIBLE_PLATFORMS.includes(targetPlat)) {
-        setNodeState(targetPlat, 'running');
-      }
-    }
-  } else if (event === 'card') {
+  // 1. Card Event: Deep Research, Strategic Plan, Platform Fitting, or 6 Platform Cards
+  if (event === 'card' || (data.platform && data.content)) {
     const platform = data.platform;
     currentCampaign.cards[platform] = data;
 
@@ -423,14 +411,45 @@ function handlePipelineEvent(event, data) {
     }
 
     redrawWires();
-  } else if (event === 'virality') {
+    return;
+  }
+
+  // 2. Status / Progress Event
+  if (event === 'status' || data.stage) {
+    if (activityMsg && data.message) activityMsg.innerText = data.message;
+    if (agentBadge && data.agent) agentBadge.innerText = data.agent;
+
+    if (data.stage === 'researching') {
+      setNodeState('research', 'running');
+    } else if (data.stage === 'planning') {
+      setNodeState('research', 'completed');
+      setNodeState('plan', 'running');
+    } else if (data.stage === 'platform_fitting') {
+      setNodeState('plan', 'completed');
+      setNodeState('platform_fitting', 'running');
+    } else if (data.stage && data.stage.startsWith('generating_')) {
+      setNodeState('platform_fitting', 'completed');
+      const targetPlat = data.stage.replace('generating_', '');
+      if (VISIBLE_PLATFORMS.includes(targetPlat)) {
+        setNodeState(targetPlat, 'running');
+      }
+    }
+    return;
+  }
+
+  // 3. Virality Scorecard
+  if (event === 'virality' || data.overall_score !== undefined) {
     currentCampaign.virality = data;
-  } else if (event === 'complete') {
+    return;
+  }
+
+  // 4. Complete Event
+  if (event === 'complete' || data.campaign_id) {
     VISIBLE_PLATFORMS.forEach(p => {
       if (currentCampaign.cards[p]) setNodeState(p, 'completed');
     });
 
-    if (activityMsg) activityMsg.innerText = '✨ Swarm completed all 11 workflow nodes!';
+    if (activityMsg) activityMsg.innerText = '✨ Swarm completed all 9 workflow nodes!';
     if (agentBadge) {
       agentBadge.innerText = 'COMPLETE';
       agentBadge.className = 'flex-shrink-0 text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/70 text-emerald-600 dark:text-emerald-300 font-mono';
