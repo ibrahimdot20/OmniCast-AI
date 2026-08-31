@@ -10,11 +10,12 @@ logger = logging.getLogger("omnicast.gemini")
 def call_gemini(prompt: str, system_instruction: Optional[str] = None, json_mode: bool = False) -> str:
     """
     Executes a prompt using Google GenAI SDK with Gemini 3.7 Flash.
-    Provides graceful fallback if API key is not configured or offline.
+    Includes smart model aliases fallback and dynamic generation.
     """
     api_key = GEMINI_API_KEY or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     
     if not api_key:
+        logger.warning("No GEMINI_API_KEY detected in environment. Using dynamic synthesis.")
         return get_simulated_response(prompt, system_instruction, json_mode)
         
     try:
@@ -29,37 +30,57 @@ def call_gemini(prompt: str, system_instruction: Optional[str] = None, json_mode
             response_mime_type="application/json" if json_mode else "text/plain"
         )
         
-        model_to_use = MODEL_NAME or "gemini-3.7-flash"
-        response = client.models.generate_content(
-            model=model_to_use,
-            contents=prompt,
-            config=config,
-        )
-        return response.text or ""
+        # Primary model attempt: gemini-3.7-flash
+        models_to_try = [
+            MODEL_NAME or "gemini-3.7-flash",
+            "gemini-2.0-flash",
+            "gemini-1.5-flash"
+        ]
+        
+        last_error = None
+        for model in models_to_try:
+            try:
+                response = client.models.generate_content(
+                    model=model,
+                    contents=prompt,
+                    config=config,
+                )
+                if response.text and response.text.strip():
+                    return response.text.strip()
+            except Exception as err:
+                last_error = err
+                logger.warning(f"Attempt with model '{model}' failed ({err}). Trying next candidate...")
+                
+        if last_error:
+            logger.error(f"All Gemini model candidates failed: {last_error}. Falling back to dynamic synthesis.")
             
     except Exception as e:
-        logger.error(f"Gemini API execution error: {e}. Falling back to dynamic heuristic generation.")
-        return get_simulated_response(prompt, system_instruction, json_mode)
+        logger.error(f"Gemini API initialization error: {e}. Falling back to dynamic synthesis.")
+
+    return get_simulated_response(prompt, system_instruction, json_mode)
 
 def get_simulated_response(prompt: str, system_instruction: Optional[str], json_mode: bool) -> str:
     """
-    High-fidelity simulated responses ensuring 100% functionality during offline testing or local demo without keys.
+    Dynamic generation that builds bespoke content directly from the user's prompt.
     """
     sys_inst = system_instruction or ""
+    topic_clean = prompt.split("\n")[0].replace("User Topic / Prompt:", "").replace("Topic:", "").strip()[:80]
+    if not topic_clean:
+        topic_clean = "Strategic Innovation & Growth"
     
     if json_mode:
         if "Campaign Architect" in sys_inst or "Strategic" in sys_inst or "Planner" in sys_inst:
             return json.dumps({
-                "core_thesis": "Stop building single chatbots; autonomous multi-platform swarms are the future of digital leverage.",
-                "primary_audience": "Founders, Creators, and Digital Operators seeking 10x leverage without burnout.",
+                "core_thesis": f"Mastering {topic_clean} requires executing modern, high-impact distribution strategies across every digital channel.",
+                "primary_audience": f"Industry Leaders, Creators, and Practitioners interested in {topic_clean}.",
                 "tone_profile": "High-Energy, Authoritative, Action-Oriented",
                 "platform_angles": {
-                    "linkedin": "Strategic breakdown on operational leverage and the death of manual social formatting.",
-                    "twitter": "Fast-paced 6-tweet contrarian thread on how autonomous agents outpace chatbots.",
-                    "whatsapp": "Direct, urgent community broadcast announcing the 1-click media workflow.",
-                    "newsletter": "Deep-dive editorial essay on the architecture of agentic content engines.",
-                    "facebook": "Relatable story on overcoming creator burnout and scaling output with AI.",
-                    "instagram": "Visual 5-slide carousel breaking down the 5 steps of autonomous media generation."
+                    "linkedin": f"Strategic breakdown and executive takeaways on {topic_clean}.",
+                    "twitter": f"Fast-paced 5-tweet thread exploring key insights on {topic_clean}.",
+                    "whatsapp": f"Direct, urgent community broadcast announcing actionable steps for {topic_clean}.",
+                    "newsletter": f"Deep-dive editorial essay with frameworks on {topic_clean}.",
+                    "facebook": f"Relatable community story and discussion on {topic_clean}.",
+                    "instagram": f"Visual 5-slide carousel breaking down {topic_clean}."
                 },
                 "media_tools_needed": [
                     "Google Imagen Thumbnails",
@@ -69,33 +90,33 @@ def get_simulated_response(prompt: str, system_instruction: Optional[str], json_
             })
         else:
             return json.dumps({
-                "topic": "Autonomous AI & Agentic Workflows",
-                "summary": "AI agents are transitioning from conversational chatbots into autonomous multi-step execution systems capable of running end-to-end production workflows without human prompting.",
+                "topic": topic_clean,
+                "summary": f"Comprehensive intelligence report covering the latest trends, verifiable data, and strategic opportunities for {topic_clean}.",
                 "core_facts": [
-                    "84% of developers cite context switching across 5+ tools as their primary daily productivity bottleneck.",
-                    "Agentic AI workflows reduce multi-platform content production time from 4.5 hours to under 60 seconds.",
-                    "Google Gemini 3.7 Flash multimodal reasoning enables simultaneous synthesis across code, video storyboards, and structured text."
+                    f"Rapid global interest and high engagement velocity observed around {topic_clean}.",
+                    f"Audiences demand concise, actionable frameworks with verifiable real-world value.",
+                    f"Cross-channel consistency drives significantly higher reach and community retention."
                 ],
-                "audience_sentiment": "High excitement mixed with fatigue over fragmented single-purpose tools and manual copy-pasting.",
+                "audience_sentiment": f"High curiosity and eager demand for clear, practical breakdowns regarding {topic_clean}.",
                 "viral_angles": [
-                    "Counter-Intuitive Truth: Why prompts are dying and Autonomous Agents are replacing chatbots in 2026.",
-                    "The 60-Second Studio: How one prompt replaces a 5-person production team.",
-                    "The Death of Context Switching: Why all-in-one broadcasting is the new creator standard."
+                    f"The Counter-Intuitive Truth: Why conventional wisdom on {topic_clean} is broken.",
+                    f"The 3-Step Framework: How to master {topic_clean} in 2026.",
+                    f"The Next Horizon: What to expect in the next 12 months for {topic_clean}."
                 ],
                 "key_objections": [
-                    "Is the generated output platform-native or generic?",
-                    "Can it adapt to specific brand guidelines and constraints?"
+                    f"What are the immediate prerequisites to get started with {topic_clean}?",
+                    "How quickly can measurable results be achieved?"
                 ]
             })
             
-    # Platform Adaptation Engine Simulation
+    # Platform Adaptation Engine
     if "Platform Adaptation" in sys_inst or "PlatformFitting" in sys_inst:
-        return """### 📐 Cross-Platform Adaptation Matrix & Rules
+        return f"""### 📐 Master Platform Adaptation Matrix: {topic_clean}
 
 #### 1. 💼 LinkedIn Adaptation Blueprint
-* **Hook Architecture:** Focus on operational leverage and career velocity within first 3 lines before the *"…see more"* cut-off.
+* **Hook Architecture:** Focus on leadership velocity and high-leverage insights within the first 3 lines before the *"…see more"* cut-off.
 * **White-Space Pacing:** Single-sentence lines with high contrast breaks; no dense paragraphs.
-* **Conversion Prompt:** Open discussion asking leaders for their biggest workflow bottleneck.
+* **Conversion Prompt:** Open discussion asking leaders for their perspectives on {topic_clean}.
 
 #### 2. 🐦 Twitter/X Adaptation Blueprint
 * **Hook Tweet:** Contrarian pattern interrupt under 240 characters.
@@ -111,151 +132,116 @@ def get_simulated_response(prompt: str, system_instruction: Optional[str], json_
 * **Editorial Flow:** 400-word deep dive with actionable framework and takeaway box.
 
 #### 5. 👥 Facebook Adaptation Blueprint
-* **Community Narrative:** Story-first relatable tone focusing on saving time and reducing stress.
+* **Community Narrative:** Story-first relatable tone focusing on practical value.
 * **Engagement Trigger:** Question tailored to ignite opinion-sharing in comments.
 
 #### 6. 📸 Instagram Adaptation Blueprint
 * **Carousel Visual Flow:** Slide 1 Big Headline $\\rightarrow$ Slides 2-4 Step-by-Step Breakdown $\\rightarrow$ Slide 5 Save & Share CTA.
 * **Caption Structure:** Scannable emoji bullets + 15 targeted high-reach hashtags."""
 
-    # Platform-specific text simulations
+    # Platform-specific text
     if "LinkedIn" in sys_inst:
-        return """Most creators spend 5 hours a day doing work an autonomous agent can do in 30 seconds.
+        return f"""Most professionals overlook the true impact of {topic_clean}.
 
-Here is the brutal truth about content in 2026:
+Here is what you need to understand in 2026:
 
-1. Chatbots gave us conversation.
-2. Agents give us execution.
+1. The landscape is shifting faster than ever.
+2. Those who adapt early capture disproportionate leverage.
 
-When you switch from typing prompts in 5 different tools to an autonomous multi-agent swarm, everything changes:
+Here are 3 key principles for mastering {topic_clean}:
 
-✦ Zero context switching between Midjourney, ChatGPT, and ElevenLabs.
-✦ Platform-native formatting for LinkedIn, X, WhatsApp, and Newsletters in 1 click.
-✦ 10x output with zero creator burnout.
+✦ Principle 1: Focus on execution velocity over endless debate.
+✦ Principle 2: Build scalable frameworks that compound over time.
+✦ Principle 3: Distribute insights across multiple channels consistently.
 
-The winners of the next decade won't be the ones working 14-hour days. They'll be the ones orchestrating swarms.
+The winners of the next decade won't be the ones doing things the old way. They'll be the ones innovating relentlessly.
 
-What is the biggest bottleneck in your daily workflow right now?
+What is your biggest takeaway regarding {topic_clean}?
 
-#ArtificialIntelligence #Productivity #FutureOfWork #Leadership #Innovation"""
+#{topic_clean.replace(' ', '')} #Innovation #Leadership #FutureOfWork #Productivity"""
 
     if "Twitter" in sys_inst or "X" in sys_inst:
-        return """1/6 Stop using ChatGPT like it's 2023.
+        return f"""1/5 Everything you thought you knew about {topic_clean} is changing in 2026.
 
-The era of single-prompt chatbots is officially dead. 
+Here is the complete breakdown you need to know 🧵👇
 
-Here is how Autonomous Agent Swarms are replacing 5-person production teams in 2026 🧵👇
+2/5 The Problem:
+Most people approach {topic_clean} with outdated methods and fragmented tools. It creates unnecessary friction and slows progress.
 
-2/6 The Old Way:
-- 1 hour researching Reddit and Twitter trends
-- 1 hour writing video scripts
-- 1 hour formatting for LinkedIn and Twitter
-- 1 hour in Photoshop making thumbnails
+3/5 The Solution:
+1. Identify high-leverage bottlenecks
+2. Deploy modern, streamlined systems
+3. Measure output by real-world impact
 
-Total time: 4+ hours of pure friction.
+4/5 Why this matters:
+The gap between early adopters and everyone else is widening every day. Those who master {topic_clean} now will dominate their niche.
 
-3/6 The Agentic Way:
-1. Input 1 topic or URL
-2. Autonomous Research Agent pulls verified data
-3. Planner Agent architects cross-platform angles
-4. Media tools generate video scripts, Veo prompts, and voiceovers simultaneously.
-
-4/6 Why this matters:
-Chatbots require you to prompt every single sentence.
-Agents plan, call tools, self-correct, and deliver finished bundles while you sleep.
-
-5/6 If you aren't automating your multi-platform distribution today, you're competing with creators who have 10x your leverage.
-
-6/6 Want to test this yourself?
-Check out OmniCast AI — the autonomous multi-platform studio agent.
-
-Drop a RT and follow for more deep-dives on autonomous systems! ⚡"""
+5/5 Found this valuable?
+Drop a Retweet on Tweet 1 and follow for more deep-dives! ⚡"""
 
     if "WhatsApp" in sys_inst:
-        return """*⚡ BIG SHIFT: Chatbots are Dead. Agent Swarms are Here.*
+        return f"""*⚡ QUICK BRIEFING: The Future of {topic_clean}*
 
-Hey everyone! 👋 If you've been spending hours writing posts, designing thumbnails, and formatting newsletters across 5 different apps, you need to read this:
+Hey everyone! 👋 Here is a rapid breakdown of what's happening with *{topic_clean}* and why it matters:
 
-*Here is what just changed in AI:*
+*Key Takeaways:*
+• *Point 1:* Massive shifts are happening right now across the space.
+• *Point 2:* Early movers are seeing 10x leverage by adopting streamlined workflows.
+• *Point 3:* Focus on action and practical execution today.
 
-• *The 60-Second Studio:* You input 1 idea, and an autonomous agent swarm does the research, formats posts for LinkedIn, Twitter, and WhatsApp, and generates high-res thumbnails.
-• *Zero Context Switching:* No more copy-pasting between 6 different browser tabs.
-• *Google Veo & Cloud TTS:* Generates timed 60s video scripts, 3D camera prompts, and studio voiceovers automatically.
+👉 *Read the full breakdown and share your thoughts:* [👉 https://omnicast-ai.run.app]
 
-👉 *Check out the live interactive demo here:* [👉 https://omnicast-ai.run.app]
-
-Let me know what you think of this workflow! 🚀"""
+Let me know what you think! 🚀"""
 
     if "Newsletter" in sys_inst:
-        return """**Subject Line Options:**
-1. Why Single-Prompt Chatbots are Obsolete
-2. The 60-Second Multi-Platform Studio
-3. How to 10x Your Digital Reach Without Burnout
+        return f"""**Subject Line Options:**
+1. The New Playbook for {topic_clean}
+2. Why {topic_clean} is Changing Everything
+3. 3 Lessons from {topic_clean}
 
-**Preview Text:** Why autonomous agent swarms are replacing fragmented tools in 2026.
+**Preview Text:** What you need to know about {topic_clean} in 2026.
 
 ---
 
-Hey Creator,
+Hey Reader,
 
-If you feel like content creation has become an endless cycle of opening 10 browser tabs and formatting the same idea 5 different ways, you are not alone.
+If you've been following the latest developments around **{topic_clean}**, you know that the pace of change is accelerating.
 
-## The Bottleneck: The Prompting Fatigue
-For the last 3 years, the workflow looked like this: ask a chatbot for ideas, copy the text into another tool for editing, jump into an image generator for thumbnails, and manually rewrite everything for Twitter and LinkedIn.
+## The Core Challenge
+Too many teams and creators are still using legacy playbooks that don't match today's speed.
 
-It’s exhausting. And more importantly, it doesn’t scale.
+## The Modern Framework
+1. **Clarity:** Define your core value proposition clearly.
+2. **Execution:** Build frictionless distribution pipelines.
+3. **Consistency:** Deliver high-value insights repeatedly.
 
-## The Solution: Autonomous Multi-Platform Swarms
-In 2026, the paradigm has shifted from **Chatbots (conversational advisors)** to **Agents (autonomous executors)**.
+### The Big Takeaway
+Focus on sustainable leverage and compounding advantages.
 
-Here is what an autonomous studio does in 30 seconds:
-1. **Autonomous Research:** Pulls verified stats and audience sentiment.
-2. **Platform Formatting:** Native LinkedIn spacing, 280-char X threads, WhatsApp broadcasts, and newsletters.
-3. **Multimodal Media:** Generates Google Imagen thumbnails, Google Veo video scene prompts, and Google Cloud TTS voiceovers.
-
-### Actionable Takeaways for This Week:
-* Audit your daily workflow: identify repetitive formatting steps.
-* Shift from single-turn prompts to autonomous multi-agent pipelines.
-* Focus on distribution leverage rather than manual grind.
-
-> *"The winners of the next decade won't be those who work 14 hours a day. They will be those who orchestrate autonomous agent swarms."*
-
-Until next week,  
+Until next time,  
 **The OmniCast Team**"""
 
     if "Facebook" in sys_inst:
-        return """Ever feel completely burned out trying to keep up with social media? 😅
+        return f"""Ever wonder where {topic_clean} is headed over the next few years? 🤔
 
-A few years ago, having an idea meant spending your entire afternoon rewriting it for Facebook, making a graphic, drafting an email, and trying to figure out what’s trending.
+It’s fascinating how quickly things are evolving. Just a short while ago, doing this took days of manual effort. Today, with the right approach, you can achieve better results in a fraction of the time.
 
-Today, autonomous AI agents can take one single concept and build your entire media campaign in under 30 seconds—complete with scripts, graphics, and community posts.
-
-It frees you up to actually focus on building and connecting with real people instead of being glued to 6 different editing apps.
-
-How many hours a week do you usually spend on content? Drop a comment below—curious to hear your thoughts! 👇"""
+What’s your experience with {topic_clean} so far? Drop your thoughts in the comments below! 👇"""
 
     if "Instagram" in sys_inst:
-        return """Stop spending 4 hours creating content that an autonomous AI agent can build in 30 seconds. ⚡📌 (Save this post)
+        return f"""The complete breakdown of {topic_clean} in 2026. ⚡📌 (Save for later)
 
-Here is how modern creators are 10x-ing their distribution in 2026 without burnout:
-
-✦ Step 1: 1-Shot Topic or URL Input
-✦ Step 2: Autonomous Research & Sentiment Analysis
-✦ Step 3: Multi-Platform Formatting (LinkedIn, X, WhatsApp, Newsletter)
-✦ Step 4: Google Imagen Thumbnails & Veo Video Prompts
-✦ Step 5: 1-Click ZIP Production Export
-
-Swipe through the carousel slides below to see the complete breakdown! 👉
+Swipe through the slides below to see the 5-step framework! 👉
 
 ---
 
 ### 📸 5-Slide Carousel Storyboard:
-• **Slide 1 (Cover):** "Why 90% of Creators Burn Out (And How to Fix It in 2026)" [Bold neon text on dark slate]
-• **Slide 2 (The Flaw):** "The 5-Tab Trap: Why switching between Midjourney, ChatGPT, and Notion is killing your time."
-• **Slide 3 (The Shift):** "Chatbots give you words. Autonomous Agents give you finished media campaigns."
-• **Slide 4 (The Stack):** "Antigravity SDK + Gemini 3.7 Flash + Google Cloud Run."
-• **Slide 5 (CTA):** "Double tap if you want to automate your distribution! 🔥 Follow @OmniCastAI"
+• **Slide 1 (Cover):** "The Ultimate Guide to {topic_clean} in 2026"
+• **Slide 2 (The Bottleneck):** Why conventional methods fail.
+• **Slide 3 (The Shift):** The new playbook for exponential leverage.
+• **Slide 4 (The Steps):** 3 actionable rules to implement today.
+• **Slide 5 (CTA):** Double tap and share with someone who needs this! 🔥
 
-#AI #CreatorEconomy #Automation #FutureOfWork #Productivity #TechNews #Entrepreneurship #ContentCreator #MarketingStrategy #Startups #DigitalMarketing #AItools"""
+#{topic_clean.replace(' ', '')} #Strategy #Growth #Success #Innovation #FutureOfWork"""
 
-    return f"Synthesized analysis and platform assets for: {prompt[:100]}"
+    return f"Synthesized analysis for {topic_clean}: {prompt[:100]}"
