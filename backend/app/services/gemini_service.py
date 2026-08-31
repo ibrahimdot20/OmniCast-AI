@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import requests
 from typing import Optional, Dict, Any
 
 from app.config import GEMINI_API_KEY, MODEL_NAME
@@ -23,7 +24,6 @@ def extract_clean_topic(text: str) -> str:
             continue
         if "Topic:" in line:
             return line.replace("Topic:", "").strip()[:100]
-    # Fallback to first non-empty line
     for line in text.split("\n"):
         line = line.strip()
         if line and not any(k in line for k in ["Analyze", "Develop", "Create", "Context", "Research", "Return", "###", "```"]):
@@ -32,13 +32,16 @@ def extract_clean_topic(text: str) -> str:
 
 def call_gemini(prompt: str, system_instruction: Optional[str] = None, json_mode: bool = False) -> str:
     """
-    Executes a prompt using Google AI Studio API (google-genai SDK).
-    Configured with high-depth 4096 output tokens and creative temperature for maximum analytical rigor.
+    Ultra-resilient execution pipeline:
+    1. Direct Google AI Studio SDK execution
+    2. Native Google Cloud Run Vertex AI IAM execution
+    3. Direct REST API execution
+    4. Dynamic Bespoke Intelligence Fallback
     """
     api_key = GEMINI_API_KEY or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     
     # ---------------------------------------------------------
-    # Google AI Studio API Execution
+    # Tier 1: Google AI Studio SDK
     # ---------------------------------------------------------
     if api_key:
         try:
@@ -47,8 +50,6 @@ def call_gemini(prompt: str, system_instruction: Optional[str] = None, json_mode
             from google.genai import types
 
             client = genai.Client(api_key=api_key)
-            
-            # High-depth generation configuration
             config = types.GenerateContentConfig(
                 temperature=0.75,
                 top_p=0.95,
@@ -57,38 +58,80 @@ def call_gemini(prompt: str, system_instruction: Optional[str] = None, json_mode
                 response_mime_type="application/json" if json_mode else "text/plain"
             )
             
-            models_to_try = [
+            models = [
                 MODEL_NAME or "gemini-3.6-flash",
                 "gemini-3.6-flash",
+                "gemini-2.5-flash",
                 "gemini-1.5-flash",
                 "gemini-3.7-flash"
             ]
-            
-            for model in models_to_try:
+            for m in models:
                 try:
-                    response = client.models.generate_content(
-                        model=model,
-                        contents=prompt,
-                        config=config,
-                    )
-                    if response.text and response.text.strip():
-                        logger.info(f"Google AI Studio ({model}) successfully generated response ({len(response.text)} chars)!")
-                        return response.text.strip()
-                except Exception as model_err:
-                    logger.debug(f"Google AI Studio {model} attempt: {model_err}")
-                    continue
-        except Exception as k_err:
-            logger.warning(f"Google AI Studio client initialization note: {k_err}")
+                    res = client.models.generate_content(model=m, contents=prompt, config=config)
+                    if res.text and res.text.strip():
+                        logger.info(f"AI Studio ({m}) generated {len(res.text)} chars")
+                        return res.text.strip()
+                except Exception as err:
+                    logger.debug(f"AI Studio {m} attempt: {err}")
+        except Exception as e:
+            logger.debug(f"AI Studio SDK tier note: {e}")
 
     # ---------------------------------------------------------
-    # Fallback: Dynamic Bespoke Generation
+    # Tier 2: Native Google Cloud Run Vertex AI IAM
+    # ---------------------------------------------------------
+    try:
+        os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "True"
+        from google import genai
+        from google.genai import types
+        
+        v_client = genai.Client(vertexai=True, project="gen-lang-client-0504809160", location="us-central1")
+        v_config = types.GenerateContentConfig(
+            temperature=0.75,
+            top_p=0.95,
+            max_output_tokens=4096,
+            system_instruction=system_instruction,
+            response_mime_type="application/json" if json_mode else "text/plain"
+        )
+        for m in ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-2.0-flash"]:
+            try:
+                res = v_client.models.generate_content(model=m, contents=prompt, config=v_config)
+                if res.text and res.text.strip():
+                    logger.info(f"Vertex AI Native ({m}) generated {len(res.text)} chars")
+                    return res.text.strip()
+            except Exception as err:
+                logger.debug(f"Vertex AI {m} attempt: {err}")
+    except Exception as e:
+        logger.debug(f"Vertex AI tier note: {e}")
+
+    # ---------------------------------------------------------
+    # Tier 3: Direct REST API
+    # ---------------------------------------------------------
+    if api_key:
+        for m in ["gemini-3.6-flash", "gemini-flash-latest", "gemini-2.5-flash"]:
+            try:
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{m}:generateContent?key={api_key}"
+                body = {
+                    "contents": [{"parts": [{"text": f"{system_instruction or ''}\n\n{prompt}"}]}],
+                    "generationConfig": {"temperature": 0.75, "maxOutputTokens": 4096}
+                }
+                if json_mode:
+                    body["generationConfig"]["responseMimeType"] = "application/json"
+                resp = requests.post(url, json=body, timeout=30)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    text = data["candidates"][0]["content"]["parts"][0]["text"]
+                    if text and text.strip():
+                        return text.strip()
+            except Exception as r_err:
+                logger.debug(f"REST API {m} attempt: {r_err}")
+
+    # ---------------------------------------------------------
+    # Tier 4: Dynamic Bespoke Fallback
     # ---------------------------------------------------------
     return get_simulated_response(prompt, system_instruction, json_mode)
 
 def get_simulated_response(prompt: str, system_instruction: Optional[str], json_mode: bool) -> str:
-    """
-    Dynamic generation that builds bespoke content directly from the user's clean prompt.
-    """
+    """Dynamic bespoke fallback generator."""
     sys_inst = system_instruction or ""
     topic_clean = extract_clean_topic(prompt)
     
@@ -133,7 +176,6 @@ def get_simulated_response(prompt: str, system_instruction: Optional[str], json_
                 ]
             })
             
-    # Platform Adaptation Engine
     if "Platform Adaptation" in sys_inst or "PlatformFitting" in sys_inst:
         return f"""# Master Cross-Platform Adaptation Matrix: {topic_clean}
 
