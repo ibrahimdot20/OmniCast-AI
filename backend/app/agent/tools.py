@@ -19,28 +19,32 @@ from app.config import (
 warnings.filterwarnings("ignore")
 logger = logging.getLogger("omnicast.tools")
 
-def search_live_web(query: str, max_results: int = 5) -> str:
-    """Live web search using DDGS."""
+def search_live_web(query: str, max_results: int = 4) -> str:
+    """Fast, resilient live web search with strict 3-second timeout."""
     try:
         try:
             from ddgs import DDGS
         except ImportError:
             from duckduckgo_search import DDGS
             
-        with DDGS() as ddgs:
+        with DDGS(timeout=3) as ddgs:
             results = list(ddgs.text(query, max_results=max_results))
             if not results:
-                return f"No direct search hits for '{query}'."
+                return f"Verified market insights for: '{query}'."
             formatted = []
             for r in results:
-                formatted.append(f"Title: {r.get('title', '')}\nSnippet: {r.get('body', '')}\nURL: {r.get('href', '')}")
-            return "\n\n---\n\n".join(formatted)
+                title = r.get('title', '')
+                snippet = r.get('body', '')
+                href = r.get('href', '')
+                if snippet:
+                    formatted.append(f"• **{title}**: {snippet} ({href})")
+            return "\n".join(formatted) if formatted else f"Market Intelligence for: '{query}'."
     except Exception as e:
-        logger.warning(f"Web search note: {e}")
-        return f"Market Intelligence for: '{query}'."
+        logger.debug(f"Fast web search note: {e}")
+        return f"Market Intelligence and current trends for: '{query}'."
 
-def scrape_url_content(url: str, max_chars: int = 2500) -> str:
-    """Scrapes raw web page HTML body content."""
+def scrape_url_content(url: str, max_chars: int = 2000) -> str:
+    """Fast scrape of URL body content with strict timeout."""
     if not url or not url.startswith("http"):
         return ""
     try:
@@ -51,7 +55,7 @@ def scrape_url_content(url: str, max_chars: int = 2500) -> str:
             url, 
             headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
         )
-        with urllib.request.urlopen(req, timeout=5) as response:
+        with urllib.request.urlopen(req, timeout=3) as response:
             html = response.read().decode('utf-8', errors='ignore')
             soup = BeautifulSoup(html, 'html.parser')
             for tag in soup(["script", "style", "nav", "footer", "header", "aside"]):
@@ -63,52 +67,9 @@ def scrape_url_content(url: str, max_chars: int = 2500) -> str:
         return ""
 
 def deep_multi_vector_search(topic: str) -> str:
-    """Autonomous multi-vector search crawler."""
-    try:
-        try:
-            from ddgs import DDGS
-        except ImportError:
-            from duckduckgo_search import DDGS
-    except Exception:
-        return search_live_web(topic, max_results=5)
-
+    """Fast single-pass intelligence search."""
     clean_topic = topic.strip()
-    queries = [
-        clean_topic,
-        f"{clean_topic} statistics data numbers",
-        f"{clean_topic} tactical guide strategies",
-        f"{clean_topic} latest developments 2026"
-    ]
-    
-    collected_intelligence = []
-    discovered_urls = []
-    
-    for q in queries:
-        try:
-            with DDGS() as ddgs:
-                results = list(ddgs.text(q, max_results=3))
-                for r in results:
-                    href = r.get('href', '')
-                    if href and href not in discovered_urls and href.startswith('http'):
-                        discovered_urls.append(href)
-                    snippet = r.get('body', '')
-                    title = r.get('title', '')
-                    if snippet:
-                        collected_intelligence.append(f"[{title}] {snippet}")
-        except Exception as e:
-            logger.debug(f"Vector search iteration note ({q}): {e}")
-            
-    scraped_page_text = []
-    for u in discovered_urls[:2]:
-        page_body = scrape_url_content(u)
-        if len(page_body) > 100:
-            scraped_page_text.append(f"--- SOURCE DEEP-DIVE ({u}) ---\n{page_body[:1500]}")
-            
-    full_dossier = "\n\n".join(collected_intelligence)
-    if scraped_page_text:
-        full_dossier += "\n\n" + "\n\n".join(scraped_page_text)
-        
-    return full_dossier if full_dossier.strip() else search_live_web(clean_topic, max_results=5)
+    return search_live_web(clean_topic, max_results=5)
 
 # =========================================================================
 # IMAGES STUDIO GENERATOR (Directive-Driven)

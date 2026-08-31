@@ -1,4 +1,5 @@
 import json
+import asyncio
 import logging
 from typing import Optional, Dict, Any, List
 from app.agent.prompts import PLANNER_SYSTEM_PROMPT
@@ -34,7 +35,7 @@ Return a valid JSON object with the following keys:
 - "platform_angles": (object mapping platform names 'linkedin', 'twitter', 'whatsapp', 'newsletter', 'facebook', 'instagram' to specific angle descriptions)
 - "media_tools_needed": (array of strings) Required tool descriptors"""
 
-        raw_response = call_gemini(user_input, system_instruction=self.system_prompt, json_mode=True)
+        raw_response = await asyncio.to_thread(call_gemini, user_input, self.system_prompt, True)
         
         return self._parse_planner_response(raw_response, prompt, research, tone)
 

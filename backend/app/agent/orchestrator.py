@@ -163,9 +163,10 @@ CAMPAIGN GROUNDING:
 
 Create the Master Cross-Platform Adaptation Matrix detailing how this campaign is fitted into the exact native mechanics, character limits, hook architecture, white-space pacing, and engagement loops for LinkedIn, Twitter/X, WhatsApp, Newsletter, Facebook, Instagram, Images, and Video. Strictly incorporate all user directives and constraints."""
 
-        fitting_raw = call_gemini(
+        fitting_raw = await asyncio.to_thread(
+            call_gemini,
             fitting_prompt,
-            system_instruction=PLATFORM_FITTING_SYSTEM_PROMPT
+            PLATFORM_FITTING_SYSTEM_PROMPT
         )
 
         fitting_card = PlatformCard(
@@ -192,149 +193,43 @@ PLATFORM FITTING GUIDELINES:
 {fitting_raw}"""
 
         # ----------------------------------------------------
-        # LEVEL 4: Distribution Nodes (6 Text + Images + Video)
+        # LEVEL 4: Distribution Nodes (6 Platforms Concurrent Swarm)
         # ----------------------------------------------------
-        
-        # 1. LinkedIn
         yield self._sse_event("status", {
             "stage": "generating_linkedin",
             "node": "node_linkedin",
-            "message": "💼 LinkedIn Architect drafting bespoke thought leadership post...",
-            "agent": "LinkedInArchitect"
+            "message": "⚡ Swarm generating all 6 platform distributions concurrently...",
+            "agent": "PlatformSwarm"
         })
-        li_raw = call_gemini(
-            f"""{base_context}
 
-TASK:
-Write a bespoke, authoritative LinkedIn post (300-450 words) strictly tailored to this subject matter and user directives.
-Do NOT use generic cookie-cutter templates. Craft an organic, compelling narrative arc with a scroll-stopping hook, generous whitespace, concrete specifics, and an engaging comment discussion question.""",
-            system_instruction=LINKEDIN_SYSTEM_PROMPT
-        )
-        li_card = PlatformCard(
-            id=f"card_linkedin_{campaign_id}",
-            platform="linkedin",
-            title="LinkedIn Post",
-            content=li_raw.strip()
-        )
-        yield self._sse_event("card", li_card.model_dump())
-        await asyncio.sleep(0.3)
+        platform_specs = [
+            ("linkedin", "LinkedIn Post", LINKEDIN_SYSTEM_PROMPT, "Write a bespoke, authoritative LinkedIn post (300-450 words) strictly tailored to this topic and user directives with magnetic hook, generous whitespace, concrete takeaways, and open debate question."),
+            ("twitter", "Twitter / X Thread", TWITTER_SYSTEM_PROMPT, "Write a high-retention 6-to-7 Tweet viral thread (Tweet 1/7 through 7/7) strictly obeying directives, with progressive narrative momentum and concrete specifics."),
+            ("whatsapp", "WhatsApp Broadcast", WHATSAPP_SYSTEM_PROMPT, "Write a direct, high-impact WhatsApp broadcast message formatted with native WhatsApp bolding (*text*), clean emoji bullets, and an urgent conversational tone."),
+            ("newsletter", "Email Newsletter", NEWSLETTER_SYSTEM_PROMPT, "Write a full 500-700 word Substack / Morning Brew style newsletter edition with 3 Subject lines, preview text, H2 sections, Actionable Playbook, and One Big Takeaway."),
+            ("facebook", "Facebook Post", FACEBOOK_SYSTEM_PROMPT, "Write an authentic, story-driven Facebook post (250-350 words) that connects emotionally with practitioners and ignites active comment discussions."),
+            ("instagram", "Instagram Caption", INSTAGRAM_SYSTEM_PROMPT, "Write an engaging, high-retention Instagram Caption with scroll-stopping hook line, formatted insight body with emojis, clear CTA, and 15-20 targeted hashtags.")
+        ]
 
-        # 2. Twitter / X
-        yield self._sse_event("status", {
-            "stage": "generating_twitter",
-            "node": "node_twitter",
-            "message": "🐦 X/Twitter Master crafting viral narrative thread...",
-            "agent": "TwitterMaster"
-        })
-        tw_raw = call_gemini(
-            f"""{base_context}
+        async def generate_single_platform(plat_key, plat_title, sys_prompt, task_desc):
+            prompt = f"{base_context}\n\nTASK:\n{task_desc}"
+            raw = await asyncio.to_thread(call_gemini, prompt, sys_prompt)
+            card = PlatformCard(
+                id=f"card_{plat_key}_{campaign_id}",
+                platform=plat_key,
+                title=plat_title,
+                content=raw.strip()
+            )
+            return card
 
-TASK:
-Write a high-retention 6-to-7 Tweet viral thread (Tweet 1/7 through Tweet 7/7) strictly obeying the user's instructions and topic angle.
-Every tweet must deliver real substance, specific data/tactics, and progressive narrative momentum.""",
-            system_instruction=TWITTER_SYSTEM_PROMPT
-        )
-        tw_card = PlatformCard(
-            id=f"card_twitter_{campaign_id}",
-            platform="twitter",
-            title="Twitter / X Thread",
-            content=tw_raw.strip()
-        )
-        yield self._sse_event("card", tw_card.model_dump())
-        await asyncio.sleep(0.3)
+        tasks = [
+            asyncio.create_task(generate_single_platform(p[0], p[1], p[2], p[3]))
+            for p in platform_specs
+        ]
 
-        # 3. WhatsApp
-        yield self._sse_event("status", {
-            "stage": "generating_whatsapp",
-            "node": "node_whatsapp",
-            "message": "💬 WhatsApp Specialist formatting community broadcast...",
-            "agent": "WhatsAppSpecialist"
-        })
-        wa_raw = call_gemini(
-            f"""{base_context}
-
-TASK:
-Write a direct, high-impact WhatsApp broadcast message formatted with native WhatsApp bolding (*text*), clean emoji bullets, and an urgent, authentic conversational tone that adheres to all user instructions.""",
-            system_instruction=WHATSAPP_SYSTEM_PROMPT
-        )
-        wa_card = PlatformCard(
-            id=f"card_whatsapp_{campaign_id}",
-            platform="whatsapp",
-            title="WhatsApp Broadcast",
-            content=wa_raw.strip()
-        )
-        yield self._sse_event("card", wa_card.model_dump())
-        await asyncio.sleep(0.3)
-
-        # 4. Email Newsletter
-        yield self._sse_event("status", {
-            "stage": "generating_newsletter",
-            "node": "node_newsletter",
-            "message": "📧 Newsletter Writer authoring editorial deep dive...",
-            "agent": "NewsletterWriter"
-        })
-        nl_raw = call_gemini(
-            f"""{base_context}
-
-TASK:
-Write a full 500-700 word Substack / Morning Brew style newsletter edition.
-Include 3 high-converting Subject Line options, 1 preview text line, a captivating opening hook, engaging H2 sections with real depth, an Actionable Playbook, a 'One Big Takeaway' box, and an editorial sign-off.""",
-            system_instruction=NEWSLETTER_SYSTEM_PROMPT
-        )
-        nl_card = PlatformCard(
-            id=f"card_newsletter_{campaign_id}",
-            platform="newsletter",
-            title="Email Newsletter",
-            content=nl_raw.strip()
-        )
-        yield self._sse_event("card", nl_card.model_dump())
-        await asyncio.sleep(0.3)
-
-        # 5. Facebook
-        yield self._sse_event("status", {
-            "stage": "generating_facebook",
-            "node": "node_facebook",
-            "message": "👥 Facebook Community Engine crafting relatable narrative post...",
-            "agent": "FacebookEngine"
-        })
-        fb_raw = call_gemini(
-            f"""{base_context}
-
-TASK:
-Write an authentic, story-driven Facebook post (250-350 words) that connects emotionally with practitioners and ignites active comment discussions around the user's topic and directives.""",
-            system_instruction=FACEBOOK_SYSTEM_PROMPT
-        )
-        fb_card = PlatformCard(
-            id=f"card_facebook_{campaign_id}",
-            platform="facebook",
-            title="Facebook Post",
-            content=fb_raw.strip()
-        )
-        yield self._sse_event("card", fb_card.model_dump())
-        await asyncio.sleep(0.3)
-
-        # 6. Instagram
-        yield self._sse_event("status", {
-            "stage": "generating_instagram",
-            "node": "node_instagram",
-            "message": "📸 Instagram Caption Specialist writing viral caption & hashtags...",
-            "agent": "InstagramSpecialist"
-        })
-        ig_raw = call_gemini(
-            f"""{base_context}
-
-TASK:
-Write an engaging, high-retention Instagram Caption with a scroll-stopping hook opening line, valuable story/insight paragraphs with clean spacing and emojis, a clear call-to-action (CTA), and 15-20 targeted hashtags. Focus STRICTLY on writing an amazing Instagram caption. Do NOT create carousel slide breakdowns.""",
-            system_instruction=INSTAGRAM_SYSTEM_PROMPT
-        )
-        ig_card = PlatformCard(
-            id=f"card_instagram_{campaign_id}",
-            platform="instagram",
-            title="Instagram Caption",
-            content=ig_raw.strip()
-        )
-        yield self._sse_event("card", ig_card.model_dump())
-        await asyncio.sleep(0.3)
+        for future in asyncio.as_completed(tasks):
+            card = await future
+            yield self._sse_event("card", card.model_dump())
 
         # ----------------------------------------------------
         # FINAL: Pipeline Completion & Virality Scorecard

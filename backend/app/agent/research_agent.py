@@ -1,4 +1,5 @@
 import json
+import asyncio
 import logging
 from typing import Optional, Dict, Any, List
 from app.agent.prompts import RESEARCH_SYSTEM_PROMPT
@@ -41,7 +42,7 @@ You must return a valid JSON object with the following keys:
 - "viral_angles": (array of 3-4 strings) Distinct, high-converting viral narrative hooks
 - "key_objections": (array of 2-3 strings) Hard counterarguments and skeptical objections to preemptively address"""
 
-        raw_response = call_gemini(user_input, system_instruction=self.system_prompt, json_mode=True)
+        raw_response = await asyncio.to_thread(call_gemini, user_input, self.system_prompt, True)
         
         return self._parse_research_response(raw_response, prompt, multi_vector_intel)
 

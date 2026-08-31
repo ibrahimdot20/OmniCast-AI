@@ -444,7 +444,7 @@ function handlePipelineEvent(event, data) {
   }
 
   // 4. Complete Event
-  if (event === 'complete' || data.campaign_id) {
+  if (event === 'complete' || data.stage === 'complete') {
     VISIBLE_PLATFORMS.forEach(p => {
       if (currentCampaign.cards[p]) setNodeState(p, 'completed');
     });
