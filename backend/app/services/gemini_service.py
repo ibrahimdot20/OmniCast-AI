@@ -30,7 +30,8 @@ def extract_clean_topic(text: str) -> str:
 
 def call_gemini(prompt: str, system_instruction: Optional[str] = None, json_mode: bool = False) -> str:
     """
-    Executes a prompt exclusively using Google AI Studio API (google-genai SDK).
+    Executes a prompt using Google AI Studio API (google-genai SDK).
+    Configured with high-depth 4096 output tokens and creative temperature for maximum analytical rigor.
     """
     api_key = GEMINI_API_KEY or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     
@@ -44,8 +45,11 @@ def call_gemini(prompt: str, system_instruction: Optional[str] = None, json_mode
 
             client = genai.Client(api_key=api_key)
             
+            # High-depth generation configuration (same power as Vertex AI)
             config = types.GenerateContentConfig(
                 temperature=0.7,
+                top_p=0.95,
+                max_output_tokens=4096,
                 system_instruction=system_instruction,
                 response_mime_type="application/json" if json_mode else "text/plain"
             )
@@ -66,7 +70,7 @@ def call_gemini(prompt: str, system_instruction: Optional[str] = None, json_mode
                         config=config,
                     )
                     if response.text and response.text.strip():
-                        logger.info(f"Google AI Studio ({model}) successfully generated response!")
+                        logger.info(f"Google AI Studio ({model}) successfully generated high-depth response ({len(response.text)} chars)!")
                         return response.text.strip()
                 except Exception as model_err:
                     logger.debug(f"Google AI Studio {model} attempt: {model_err}")
