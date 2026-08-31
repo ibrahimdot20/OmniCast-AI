@@ -193,25 +193,24 @@ PLATFORM FITTING GUIDELINES:
 {fitting_raw}"""
 
         # ----------------------------------------------------
-        # LEVEL 4: Distribution Nodes (6 Platforms Concurrent Swarm)
+        # LEVEL 4: Distribution Nodes (6 Specialized Platform Agents)
         # ----------------------------------------------------
-        yield self._sse_event("status", {
-            "stage": "generating_linkedin",
-            "node": "node_linkedin",
-            "message": "⚡ Swarm generating all 6 platform distributions concurrently...",
-            "agent": "PlatformSwarm"
-        })
-
-        platform_specs = [
-            ("linkedin", "LinkedIn Post", LINKEDIN_SYSTEM_PROMPT, "Write a bespoke, authoritative LinkedIn post (300-450 words) strictly tailored to this topic and user directives with magnetic hook, generous whitespace, concrete takeaways, and open debate question."),
-            ("twitter", "Twitter / X Thread", TWITTER_SYSTEM_PROMPT, "Write a high-retention 6-to-7 Tweet viral thread (Tweet 1/7 through 7/7) strictly obeying directives, with progressive narrative momentum and concrete specifics."),
-            ("whatsapp", "WhatsApp Broadcast", WHATSAPP_SYSTEM_PROMPT, "Write a direct, high-impact WhatsApp broadcast message formatted with native WhatsApp bolding (*text*), clean emoji bullets, and an urgent conversational tone."),
-            ("newsletter", "Email Newsletter", NEWSLETTER_SYSTEM_PROMPT, "Write a full 500-700 word Substack / Morning Brew style newsletter edition with 3 Subject lines, preview text, H2 sections, Actionable Playbook, and One Big Takeaway."),
-            ("facebook", "Facebook Post", FACEBOOK_SYSTEM_PROMPT, "Write an authentic, story-driven Facebook post (250-350 words) that connects emotionally with practitioners and ignites active comment discussions."),
-            ("instagram", "Instagram Caption", INSTAGRAM_SYSTEM_PROMPT, "Write an engaging, high-retention Instagram Caption with scroll-stopping hook line, formatted insight body with emojis, clear CTA, and 15-20 targeted hashtags.")
+        platform_agents = [
+            ("linkedin", "node_linkedin", "LinkedIn Post", "💼 LinkedIn Architect drafting bespoke thought leadership post...", "LinkedInArchitect", LINKEDIN_SYSTEM_PROMPT, "Write a bespoke, authoritative LinkedIn post (300-450 words) strictly tailored to this topic and user directives with magnetic hook, generous whitespace, concrete takeaways, and open debate question."),
+            ("twitter", "node_twitter", "Twitter / X Thread", "🐦 X/Twitter Master crafting viral narrative thread...", "TwitterMaster", TWITTER_SYSTEM_PROMPT, "Write a high-retention 6-to-7 Tweet viral thread (Tweet 1/7 through 7/7) strictly obeying directives, with progressive narrative momentum and concrete specifics."),
+            ("whatsapp", "node_whatsapp", "WhatsApp Broadcast", "💬 WhatsApp Specialist formatting community broadcast...", "WhatsAppSpecialist", WHATSAPP_SYSTEM_PROMPT, "Write a direct, high-impact WhatsApp broadcast message formatted with native WhatsApp bolding (*text*), clean emoji bullets, and an urgent conversational tone."),
+            ("newsletter", "node_newsletter", "Email Newsletter", "📧 Newsletter Writer authoring editorial deep dive...", "NewsletterWriter", NEWSLETTER_SYSTEM_PROMPT, "Write a full 500-700 word Substack / Morning Brew style newsletter edition with 3 Subject lines, preview text, H2 sections, Actionable Playbook, and One Big Takeaway."),
+            ("facebook", "node_facebook", "Facebook Post", "👥 Facebook Community Engine crafting relatable narrative post...", "FacebookEngine", FACEBOOK_SYSTEM_PROMPT, "Write an authentic, story-driven Facebook post (250-350 words) that connects emotionally with practitioners and ignites active comment discussions."),
+            ("instagram", "node_instagram", "Instagram Caption", "📸 Instagram Caption Specialist writing viral caption & hashtags...", "InstagramSpecialist", INSTAGRAM_SYSTEM_PROMPT, "Write an engaging, high-retention Instagram Caption with scroll-stopping hook line, formatted insight body with emojis, clear CTA, and 15-20 targeted hashtags.")
         ]
 
-        async def generate_single_platform(plat_key, plat_title, sys_prompt, task_desc):
+        for plat_key, plat_node, plat_title, status_msg, agent_name, sys_prompt, task_desc in platform_agents:
+            yield self._sse_event("status", {
+                "stage": f"generating_{plat_key}",
+                "node": plat_node,
+                "message": status_msg,
+                "agent": agent_name
+            })
             prompt = f"{base_context}\n\nTASK:\n{task_desc}"
             raw = await asyncio.to_thread(call_gemini, prompt, sys_prompt)
             card = PlatformCard(
@@ -220,16 +219,8 @@ PLATFORM FITTING GUIDELINES:
                 title=plat_title,
                 content=raw.strip()
             )
-            return card
-
-        tasks = [
-            asyncio.create_task(generate_single_platform(p[0], p[1], p[2], p[3]))
-            for p in platform_specs
-        ]
-
-        for future in asyncio.as_completed(tasks):
-            card = await future
             yield self._sse_event("card", card.model_dump())
+            await asyncio.sleep(0.3)
 
         # ----------------------------------------------------
         # FINAL: Pipeline Completion & Virality Scorecard

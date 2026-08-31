@@ -40,7 +40,7 @@ def call_gemini(prompt: str, system_instruction: Optional[str] = None, json_mode
     api_key = GEMINI_API_KEY or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     
     if api_key:
-        models = ["gemini-3.5-flash-lite", "gemini-flash-lite-latest", "gemini-3.6-flash"]
+        models = ["gemini-3.5-flash-lite", "gemini-3.6-flash"]
         for m in models:
             try:
                 url = f"https://generativelanguage.googleapis.com/v1beta/models/{m}:generateContent?key={api_key}"
@@ -50,7 +50,7 @@ def call_gemini(prompt: str, system_instruction: Optional[str] = None, json_mode
                 }
                 if json_mode:
                     body["generationConfig"]["responseMimeType"] = "application/json"
-                resp = requests.post(url, json=body, timeout=6)
+                resp = requests.post(url, json=body, timeout=25)
                 if resp.status_code == 200:
                     data = resp.json()
                     candidates = data.get("candidates", [])
