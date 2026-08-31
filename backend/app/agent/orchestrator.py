@@ -42,13 +42,13 @@ class MasterOrchestrator:
         yield self._sse_event("status", {
             "stage": "starting",
             "node": "node_init",
-            "message": f"🚀 Initializing High-Intelligence Swarm for: '{req.prompt[:50]}...'",
+            "message": f"🚀 Initializing Swarm for: '{req.prompt[:50]}...'",
             "campaign_id": campaign_id
         })
         await asyncio.sleep(0.3)
 
         # ----------------------------------------------------
-        # LEVEL 1: Autonomous Deep Research Agent
+        # LEVEL 1: Autonomous Deep Multi-Vector Research Agent
         # ----------------------------------------------------
         yield self._sse_event("status", {
             "stage": "researching",
@@ -62,7 +62,7 @@ class MasterOrchestrator:
         yield self._sse_event("status", {
             "stage": "researching",
             "node": "node_research",
-            "message": "📊 Synthesizing 20+ verified data points, audience sentiment & viral narrative angles...",
+            "message": "📊 Synthesizing verified data points, audience sentiment & viral narrative angles...",
             "agent": "ResearchAgent"
         })
         await asyncio.sleep(0.3)
@@ -72,22 +72,22 @@ class MasterOrchestrator:
 
 ---
 
-### 📊 Core Facts & Verifiable Market Intelligence
+### 📊 Core Facts & Verifiable Intelligence
 """ + "\n".join([f"• **Fact:** {f}" for f in research.core_facts]) + f"""
 
 ---
 
-### 🎯 Audience Psychology & Sentiment Breakdown
+### 🎯 Audience Psychology & Sentiment
 {research.audience_sentiment}
 
 ---
 
-### ⚡ Discovered High-Impact Viral Narrative Angles
+### ⚡ Strategic Narrative Angles
 """ + "\n".join([f"🔥 **{a}**" for a in research.viral_angles]) + f"""
 
 ---
 
-### 🛡️ Critical Objections & Friction Points
+### 🛡️ Anticipated Objections & Nuances
 """ + "\n".join([f"⚠️ {o}" for o in research.key_objections])
 
         research_card = PlatformCard(
@@ -106,7 +106,7 @@ class MasterOrchestrator:
         yield self._sse_event("status", {
             "stage": "planning",
             "node": "node_plan",
-            "message": "🧠 Strategic Planner formulating narrative thesis, persona angles & multi-channel strategy...",
+            "message": "🧠 Strategic Planner formulating thesis, persona angles & multi-channel strategy...",
             "agent": "PlannerAgent"
         })
         
@@ -117,19 +117,19 @@ class MasterOrchestrator:
 
 ---
 
-### 👥 Target Demographics & Tone Calibration
+### 👥 Target Demographics & Tone Profile
 * **Target Audience:** {plan.primary_audience}
-* **Calibrated Brand Tone:** `{plan.tone_profile}`
+* **Brand Tone:** `{plan.tone_profile}`
 
 ---
 
-### 🗺️ Multi-Channel Narrative Angle Allocation
-* 💼 **LinkedIn:** {plan.platform_angles.get('linkedin', 'Executive thought leadership, operational leverage & strategic takeaways')}
-* 🐦 **X (Twitter):** {plan.platform_angles.get('twitter', 'Curiosity pattern interrupt, contrarian lessons & viral retention thread')}
+### 🗺️ Channel-by-Channel Strategy Blueprint
+* 💼 **LinkedIn:** {plan.platform_angles.get('linkedin', 'Executive thought leadership and strategic takeaways')}
+* 🐦 **X (Twitter):** {plan.platform_angles.get('twitter', 'Curiosity hook & contrarian value thread')}
 * 💬 **WhatsApp:** {plan.platform_angles.get('whatsapp', 'Urgent, high-value direct community broadcast')}
-* 📧 **Newsletter:** {plan.platform_angles.get('newsletter', 'Deep-dive 600-word editorial essay with actionable frameworks')}
-* 👥 **Facebook:** {plan.platform_angles.get('facebook', 'Authentic community story & discussion prompt')}
-* 📸 **Instagram:** {plan.platform_angles.get('instagram', 'Visual 5-slide carousel breakdown with design blueprints')}
+* 📧 **Newsletter:** {plan.platform_angles.get('newsletter', 'Deep-dive editorial essay with frameworks')}
+* 👥 **Facebook:** {plan.platform_angles.get('facebook', 'Community story & interactive discussion')}
+* 📸 **Instagram:** {plan.platform_angles.get('instagram', 'Visual 5-slide carousel breakdown')}
 """
 
         plan_card = PlatformCard(
@@ -148,18 +148,21 @@ class MasterOrchestrator:
         yield self._sse_event("status", {
             "stage": "platform_fitting",
             "node": "node_platform_fitting",
-            "message": "📐 Platform Adaptation Engine calibrating native mechanics, hook rules, whitespace & limits...",
+            "message": "📐 Platform Adaptation Engine calibrating native mechanics, rules & limits...",
             "agent": "PlatformFittingArchitect"
         })
 
-        fitting_prompt = f"""Topic: {research.topic}
-User Request: {req.prompt}
-Core Thesis: {plan.core_thesis}
-Tone: {plan.tone_profile}
-Key Facts: {'; '.join(research.core_facts)}
-Viral Angles: {'; '.join(research.viral_angles)}
+        fitting_prompt = f"""USER PROMPT & DIRECTIVES:
+{req.prompt}
 
-Build the Master Cross-Platform Adaptation Matrix. For every single channel (LinkedIn, Twitter/X, WhatsApp, Newsletter, Facebook, Instagram), formulate the exact hook structure, character bounds, whitespace pacing, psychological trigger, and engagement conversion mechanism."""
+CAMPAIGN GROUNDING:
+- Topic: {research.topic}
+- Core Thesis: {plan.core_thesis}
+- Tone: {plan.tone_profile}
+- Key Facts: {'; '.join(research.core_facts)}
+- Strategic Angles: {'; '.join(research.viral_angles)}
+
+Create the Master Cross-Platform Adaptation Matrix detailing how this campaign is fitted into the exact native mechanics, character limits, hook architecture, white-space pacing, and engagement loops for LinkedIn, Twitter/X, WhatsApp, Newsletter, Facebook, and Instagram. Strictly incorporate all user directives and constraints."""
 
         fitting_raw = call_gemini(
             fitting_prompt,
@@ -176,15 +179,18 @@ Build the Master Cross-Platform Adaptation Matrix. For every single channel (Lin
         yield self._sse_event("card", fitting_card.model_dump())
         await asyncio.sleep(0.4)
 
-        # Dynamic grounding context for subsequent platform nodes
-        base_context = f"""Topic: {research.topic}
-User Request: {req.prompt}
-Core Thesis: {plan.core_thesis}
-Tone: {plan.tone_profile}
-Key Research Facts:
-{chr(10).join(['- ' + f for f in research.core_facts])}
+        # Base prompt context for subsequent platform nodes
+        base_context = f"""USER PROMPT & DIRECTIVES (MANDATORY TO FOLLOW):
+{req.prompt}
 
-Platform Fitting Blueprint:
+CAMPAIGN GROUNDING:
+- Topic: {research.topic}
+- Core Thesis: {plan.core_thesis}
+- Tone Calibration: {plan.tone_profile}
+- Key Research Facts & Intelligence:
+{chr(10).join(['• ' + f for f in research.core_facts])}
+
+PLATFORM FITTING GUIDELINES:
 {fitting_raw}"""
 
         # ----------------------------------------------------
@@ -195,11 +201,15 @@ Platform Fitting Blueprint:
         yield self._sse_event("status", {
             "stage": "generating_linkedin",
             "node": "node_linkedin",
-            "message": "💼 LinkedIn Architect crafting 350+ word executive thought-leadership masterclass...",
+            "message": "💼 LinkedIn Architect drafting bespoke thought leadership post...",
             "agent": "LinkedInArchitect"
         })
         li_raw = call_gemini(
-            f"{base_context}\n\nWrite an exhaustive, high-impact LinkedIn post (350+ words). Include a bold 3-line scroll-stopping hook, generous whitespace pacing, 3-4 structured bulleted principles with real-world impact, a thought-provoking comment discussion question, and 4-5 hashtags.",
+            f"""{base_context}
+
+TASK:
+Write a bespoke, authoritative LinkedIn post (300-450 words) strictly tailored to this subject matter and user directives.
+Do NOT use generic cookie-cutter templates. Craft an organic, compelling narrative arc with a scroll-stopping hook, generous whitespace, concrete specifics, and an engaging comment discussion question.""",
             system_instruction=LINKEDIN_SYSTEM_PROMPT
         )
         li_card = PlatformCard(
@@ -215,11 +225,15 @@ Platform Fitting Blueprint:
         yield self._sse_event("status", {
             "stage": "generating_twitter",
             "node": "node_twitter",
-            "message": "🐦 X/Twitter Master drafting 7-tweet high-retention viral master thread...",
+            "message": "🐦 X/Twitter Master crafting viral narrative thread...",
             "agent": "TwitterMaster"
         })
         tw_raw = call_gemini(
-            f"{base_context}\n\nWrite a complete 7-tweet viral thread (Tweet 1/7 through Tweet 7/7). Include a curiosity-driven hook in Tweet 1, painful mistake in Tweet 2, step-by-step framework in Tweets 3-5, high-leverage insight in Tweet 6, and a summary CTA in Tweet 7.",
+            f"""{base_context}
+
+TASK:
+Write a high-retention 6-to-7 Tweet viral thread (Tweet 1/7 through Tweet 7/7) strictly obeying the user's instructions and topic angle.
+Every tweet must deliver real substance, specific data/tactics, and progressive narrative momentum.""",
             system_instruction=TWITTER_SYSTEM_PROMPT
         )
         tw_card = PlatformCard(
@@ -235,11 +249,14 @@ Platform Fitting Blueprint:
         yield self._sse_event("status", {
             "stage": "generating_whatsapp",
             "node": "node_whatsapp",
-            "message": "💬 WhatsApp Specialist formatting direct-response community broadcast...",
+            "message": "💬 WhatsApp Specialist formatting community broadcast...",
             "agent": "WhatsAppSpecialist"
         })
         wa_raw = call_gemini(
-            f"{base_context}\n\nWrite a complete, beautifully formatted WhatsApp broadcast announcement with bold header (*HEADER*), 2-sentence hook, 4 formatted bullet points with native bold keywords (*bold*), and clear action link.",
+            f"""{base_context}
+
+TASK:
+Write a direct, high-impact WhatsApp broadcast message formatted with native WhatsApp bolding (*text*), clean emoji bullets, and an urgent, authentic conversational tone that adheres to all user instructions.""",
             system_instruction=WHATSAPP_SYSTEM_PROMPT
         )
         wa_card = PlatformCard(
@@ -255,11 +272,15 @@ Platform Fitting Blueprint:
         yield self._sse_event("status", {
             "stage": "generating_newsletter",
             "node": "node_newsletter",
-            "message": "📧 Newsletter Writer authoring 600-word editorial deep dive with playbook...",
+            "message": "📧 Newsletter Writer authoring editorial deep dive...",
             "agent": "NewsletterWriter"
         })
         nl_raw = call_gemini(
-            f"{base_context}\n\nWrite an extensive 500-700 word Substack / Morning Brew style newsletter. Include 3 Subject Line options, Preview snippet, engaging introduction, H2 subheadings, 3-step Actionable Playbook, 'One Big Takeaway' box, and editorial sign-off.",
+            f"""{base_context}
+
+TASK:
+Write a full 500-700 word Substack / Morning Brew style newsletter edition.
+Include 3 high-converting Subject Line options, 1 preview text line, a captivating opening hook, engaging H2 sections with real depth, an Actionable Playbook, a 'One Big Takeaway' box, and an editorial sign-off.""",
             system_instruction=NEWSLETTER_SYSTEM_PROMPT
         )
         nl_card = PlatformCard(
@@ -275,11 +296,14 @@ Platform Fitting Blueprint:
         yield self._sse_event("status", {
             "stage": "generating_facebook",
             "node": "node_facebook",
-            "message": "👥 Facebook Community Engine crafting 300+ word story-driven engagement post...",
+            "message": "👥 Facebook Community Engine crafting relatable narrative post...",
             "agent": "FacebookEngine"
         })
         fb_raw = call_gemini(
-            f"{base_context}\n\nWrite an authentic, 300-word story-driven Facebook community post with relatable opening hook, personal/industry lessons learned, structured bullet takeaways, and a comment-igniting question.",
+            f"""{base_context}
+
+TASK:
+Write an authentic, story-driven Facebook post (250-350 words) that connects emotionally with practitioners and ignites active comment discussions around the user's topic and directives.""",
             system_instruction=FACEBOOK_SYSTEM_PROMPT
         )
         fb_card = PlatformCard(
@@ -295,11 +319,14 @@ Platform Fitting Blueprint:
         yield self._sse_event("status", {
             "stage": "generating_instagram",
             "node": "node_instagram",
-            "message": "📸 Instagram Visualist designing 5-slide carousel storyboard & deep caption...",
+            "message": "📸 Instagram Visualist designing carousel storyboard & caption...",
             "agent": "InstagramVisualist"
         })
         ig_raw = call_gemini(
-            f"{base_context}\n\nWrite a complete 5-Slide Instagram Visual Carousel Blueprint (detailed visual cues & copy for Slides 1-5) AND a full 200-word caption with value bullets, save CTA, and 15-20 hashtags.",
+            f"""{base_context}
+
+TASK:
+Create a complete 5-Slide Visual Carousel Storyboard (detailed visual cues & slide copy for Slides 1-5) AND a full 200+ word structured caption with 15-20 relevant hashtags, tailored directly to the user's directives.""",
             system_instruction=INSTAGRAM_SYSTEM_PROMPT
         )
         ig_card = PlatformCard(
@@ -331,7 +358,7 @@ Platform Fitting Blueprint:
             hook_strength=9.9,
             retention_estimate="High (>89% 60s completion)",
             clarity_score=9.8,
-            recommendation="Masterclass execution. Every single node delivers high-density, platform-native craftsmanship."
+            recommendation="Masterclass execution. Every single node delivers bespoke, directive-driven craftsmanship."
         )
         
         yield self._sse_event("virality", scorecard.model_dump())
@@ -339,7 +366,7 @@ Platform Fitting Blueprint:
         yield self._sse_event("complete", {
             "campaign_id": campaign_id,
             "created_at": created_at,
-            "message": "✨ OmniCast AI High-Density Studio Swarm has completed all nodes!"
+            "message": "✨ OmniCast AI Studio Swarm has completed all 9 workflow nodes!"
         })
 
     def _sse_event(self, event_type: str, data: Dict[str, Any]) -> str:
