@@ -1,6 +1,6 @@
 // =========================================================================
-// OMNICAST AI — FRONTEND APPLICATION CONTROLLER (v7.0)
-// Complete 11-Node Swarm, Directive-Driven Images & Video, History Persistence
+// OMNICAST AI — FRONTEND APPLICATION CONTROLLER (v9.0)
+// 9-Node Swarm: Deep Research, Strategic Plan, Platform Fitting, 6 Platforms
 // =========================================================================
 
 const VISIBLE_PLATFORMS = [
@@ -12,9 +12,7 @@ const VISIBLE_PLATFORMS = [
   'whatsapp',
   'newsletter',
   'facebook',
-  'instagram',
-  'images',
-  'video'
+  'instagram'
 ];
 
 const PLATFORMS_CONFIG = {
@@ -75,25 +73,11 @@ const PLATFORMS_CONFIG = {
     subtitle: 'Community Story & Discussion'
   },
   instagram: {
-    title: 'Instagram Carousel',
+    title: 'Instagram Caption',
     icon: 'fa-brands fa-instagram',
     badgeClass: 'badge-instagram',
     accentColor: '#e1306c',
-    subtitle: '5-Slide Carousel & Caption'
-  },
-  images: {
-    title: 'AI Images Studio',
-    icon: 'fa-solid fa-images',
-    badgeClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-    accentColor: '#f59e0b',
-    subtitle: 'Directive-Driven Visual Suite'
-  },
-  video: {
-    title: 'AI Video Studio',
-    icon: 'fa-solid fa-film',
-    badgeClass: 'bg-rose-500/10 text-rose-600 dark:text-rose-400',
-    accentColor: '#f43f5e',
-    subtitle: '20-Second Dynamic MP4'
+    subtitle: 'Caption & Hashtag Strategy'
   }
 };
 
@@ -209,14 +193,6 @@ function redrawWires() {
     .map(p => ({ platform: p, pos: getPortCenter(`node_${p}`, 'port-top') }))
     .filter(item => item.pos !== null);
 
-  const platformBottomPorts = distributionPlatforms
-    .map(p => ({ platform: p, pos: getPortCenter(`node_${p}`, 'port-bottom') }))
-    .filter(item => item.pos !== null);
-
-  const mediaPorts = ['images', 'video']
-    .map(p => ({ platform: p, pos: getPortCenter(`node_${p}`, 'port-top') }))
-    .filter(item => item.pos !== null);
-
   if (platformTopPorts.length > 0) {
     const minX = Math.min(...platformTopPorts.map(p => p.pos.x));
     const maxX = Math.max(...platformTopPorts.map(p => p.pos.x));
@@ -254,76 +230,6 @@ function redrawWires() {
       feeder.setAttribute('class', currentCampaign.cards[item.platform] ? 'wire-path completed' : 'wire-path');
       svg.appendChild(feeder);
     });
-
-    // Wire 4: Matching Full-Width LOWER Bus Line (Across all 6 platform nodes)
-    if (platformBottomPorts.length > 0 && mediaPorts.length > 0) {
-      const maxBottomY = Math.max(...platformBottomPorts.map(p => p.pos.y));
-      const minMediaTopY = Math.min(...mediaPorts.map(p => p.pos.y));
-      const lowerBusY = maxBottomY + 20;
-
-      const isAnyPlatformReady = distributionPlatforms.some(p => currentCampaign.cards[p]);
-      const isMediaReady = Boolean(currentCampaign.cards['images'] || currentCampaign.cards['video']);
-
-      // Feeders from each platform bottom port down to the lower bus line
-      platformBottomPorts.forEach((item) => {
-        const feeder = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        feeder.id = `wire_lower_feeder_${item.platform}`;
-        feeder.setAttribute('x1', item.pos.x);
-        feeder.setAttribute('y1', item.pos.y);
-        feeder.setAttribute('x2', item.pos.x);
-        feeder.setAttribute('y2', lowerBusY);
-        feeder.setAttribute('class', currentCampaign.cards[item.platform] ? 'wire-path completed' : 'wire-path');
-        svg.appendChild(feeder);
-      });
-
-      // Full-Width Lower Bus Line (Same width as upper line across all 6 platform nodes)
-      const lowerBus = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      lowerBus.id = 'wire_lower_bus_bar';
-      lowerBus.setAttribute('x1', minX);
-      lowerBus.setAttribute('y1', lowerBusY);
-      lowerBus.setAttribute('x2', maxX);
-      lowerBus.setAttribute('y2', lowerBusY);
-      lowerBus.setAttribute('class', isAnyPlatformReady ? 'wire-path completed' : 'wire-path');
-      svg.appendChild(lowerBus);
-
-      // Wire 5: Single Central Line dropping down from Lower Bus Line
-      const mediaForkY = lowerBusY + Math.max(16, (minMediaTopY - lowerBusY) / 2);
-      const mediaMinX = Math.min(...mediaPorts.map(p => p.pos.x));
-      const mediaMaxX = Math.max(...mediaPorts.map(p => p.pos.x));
-      const mediaCenterX = (mediaMinX + mediaMaxX) / 2;
-
-      // 1. The Single Central Vertical Line
-      const mediaStem = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      mediaStem.id = 'wire_media_single_stem';
-      mediaStem.setAttribute('x1', mediaCenterX);
-      mediaStem.setAttribute('y1', lowerBusY);
-      mediaStem.setAttribute('x2', mediaCenterX);
-      mediaStem.setAttribute('y2', mediaForkY);
-      mediaStem.setAttribute('class', isMediaReady ? 'wire-path completed' : 'wire-path');
-      svg.appendChild(mediaStem);
-
-      // 2. The Two Branches (Horizontal Splitter)
-      const mediaFork = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      mediaFork.id = 'wire_media_two_branches';
-      mediaFork.setAttribute('x1', mediaMinX);
-      mediaFork.setAttribute('y1', mediaForkY);
-      mediaFork.setAttribute('x2', mediaMaxX);
-      mediaFork.setAttribute('y2', mediaForkY);
-      mediaFork.setAttribute('class', isMediaReady ? 'wire-path completed' : 'wire-path');
-      svg.appendChild(mediaFork);
-
-      // 3. Feeders from the two branches down into AI Images and AI Video nodes
-      mediaPorts.forEach((item) => {
-        const feeder = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        feeder.id = `wire_media_feeder_${item.platform}`;
-        feeder.setAttribute('x1', item.pos.x);
-        feeder.setAttribute('y1', mediaForkY);
-        feeder.setAttribute('x2', item.pos.x);
-        feeder.setAttribute('y2', item.pos.y);
-        feeder.setAttribute('class', currentCampaign.cards[item.platform] ? 'wire-path completed' : 'wire-path');
-        svg.appendChild(feeder);
-      });
-    }
   }
 }
 
@@ -716,7 +622,8 @@ function clearAllHistory() {
 }
 
 // ----------------------------------------------------
-// DETAIL INSPECTION MODAL (With Media Suite Support)
+// ----------------------------------------------------
+// DETAIL INSPECTION MODAL
 // ----------------------------------------------------
 function openDetailModal(platform) {
   activeModalPlatform = platform;
@@ -744,64 +651,15 @@ function openDetailModal(platform) {
       </div>`;
     editTextarea.value = '';
   } else {
-    // Custom media view handling
-    if (platform === 'images' && card.metadata && card.metadata.images && card.metadata.images.length > 0) {
-      let imagesHtml = `<div class="space-y-4">
-        <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-gray-800">
-          <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Generated ${card.metadata.images.length} Image Asset(s)</span>
-          <span class="text-[10px] text-amber-600 dark:text-amber-400 font-semibold">100% Directive-Driven</span>
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">`;
-      
-      card.metadata.images.forEach(img => {
-        imagesHtml += `
-          <div class="bg-slate-50 dark:bg-gray-800 rounded-xl p-3 border border-slate-200 dark:border-gray-700 flex flex-col justify-between">
-            <div>
-              <img src="${img.url}" alt="${escapeHtml(img.title)}" class="w-full rounded-lg shadow-sm mb-2 object-cover ${img.aspect_ratio === '9:16' ? 'max-h-[280px]' : 'max-h-[180px]'}" />
-              <h5 class="text-xs font-bold text-slate-900 dark:text-white">${escapeHtml(img.title)}</h5>
-              <span class="text-[10px] text-slate-500">${img.theme} • Ratio: ${img.aspect_ratio}</span>
-            </div>
-            <a href="${img.url}" download="${img.title.replace(/\s+/g, '_')}.png" class="mt-3 inline-flex items-center justify-center space-x-1 text-xs font-semibold py-1.5 px-3 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-all">
-              <i class="fa-solid fa-download text-[10px]"></i>
-              <span>Download High-Res</span>
-            </a>
-          </div>`;
-      });
-      imagesHtml += `</div></div>`;
-      contentView.innerHTML = imagesHtml;
-      editTextarea.value = card.content;
-    } else if (platform === 'video' && card.metadata && card.metadata.video_url) {
-      contentView.innerHTML = `
-        <div class="space-y-4">
-          <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-gray-800">
-            <span class="text-xs font-bold text-slate-700 dark:text-slate-300">20-Second Dynamic MP4 Video</span>
-            <span class="text-[10px] text-rose-600 dark:text-rose-400 font-semibold">4-Scene Storyboard</span>
-          </div>
-          <div class="flex justify-center bg-black rounded-xl p-2 shadow-inner">
-            <video controls autoplay loop class="rounded-lg max-h-[360px] w-auto">
-              <source src="${card.metadata.video_url}" type="video/mp4">
-              Your browser does not support the video tag.
-            </video>
-          </div>
-          <div class="bg-slate-50 dark:bg-gray-800 p-3 rounded-xl border border-slate-200 dark:border-gray-700 text-xs">
-            <h6 class="font-bold text-slate-900 dark:text-white mb-1">🎬 Storyboard Scenes:</h6>
-            <ul class="list-disc list-inside space-y-1 text-slate-600 dark:text-slate-400 text-[11px]">
-              ${(card.metadata.scenes || ['Scene 1', 'Scene 2', 'Scene 3', 'Scene 4']).map(s => `<li>${escapeHtml(s)}</li>`).join('')}
-            </ul>
-          </div>
-          <div class="flex justify-end">
-            <a href="${card.metadata.video_url}" download="omnicast_campaign_video.mp4" class="inline-flex items-center space-x-1.5 text-xs font-semibold py-2 px-4 bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition-all">
-              <i class="fa-solid fa-download"></i>
-              <span>Download MP4 Video</span>
-            </a>
-          </div>
-        </div>`;
-      editTextarea.value = card.content;
-    } else {
-      contentView.innerHTML = formatMarkdown(card.content);
-      editTextarea.value = card.content;
-    }
+    contentView.innerHTML = formatMarkdown(card.content);
+    editTextarea.value = card.content;
   }
+
+  // Ensure scroll position always starts from the absolute top
+  if (contentView) contentView.scrollTop = 0;
+  if (editView) editView.scrollTop = 0;
+  const modalContainer = document.getElementById('nodeDetailModal');
+  if (modalContainer) modalContainer.scrollTop = 0;
 
   document.getElementById('modalTweakInput').value = '';
   document.getElementById('nodeDetailModal').classList.remove('hidden');
@@ -975,4 +833,65 @@ function showToast(message, type = 'info') {
     toast.style.opacity = '0';
     setTimeout(() => toast.remove(), 200);
   }, 3000);
+}
+
+// ----------------------------------------------------
+// FRESH START / RESET FOR NEW CAMPAIGN
+// ----------------------------------------------------
+const INITIAL_SNIPPETS = {
+  research: 'Comprehensive live internet research dossier.',
+  plan: 'Narrative thesis and cross-channel strategy.',
+  platform_fitting: 'Native pacing, rules and hook architecture.',
+  linkedin: 'Thought leadership post.',
+  twitter: '7-Tweet viral thread.',
+  whatsapp: 'Direct broadcast message.',
+  newsletter: '600-word editorial deep dive.',
+  facebook: 'Community narrative post.',
+  instagram: 'Engaging Instagram caption & hashtags.'
+};
+
+function resetForNewCampaign() {
+  const inputElem = document.getElementById('promptInput');
+  if (inputElem) inputElem.value = '';
+
+  currentCampaign = {
+    id: null,
+    timestamp: null,
+    prompt: '',
+    tone: '',
+    cards: {},
+    research: null,
+    plan: null,
+    virality: null
+  };
+
+  VISIBLE_PLATFORMS.forEach(p => {
+    const node = document.getElementById(`node_${p}`);
+    const pill = document.getElementById(`status_pill_${p}`);
+    const snip = document.getElementById(`snippet_${p}`);
+    if (node) {
+      node.className = node.className.replace(/state-\w+/g, '').trim() + ' state-idle';
+    }
+    if (pill) {
+      pill.className = 'px-1.5 py-0.5 text-[9px] font-bold rounded bg-slate-100 dark:bg-gray-800 text-slate-500';
+      pill.innerText = '⚪ Idle';
+    }
+    if (snip && INITIAL_SNIPPETS[p]) {
+      snip.innerText = INITIAL_SNIPPETS[p];
+    }
+  });
+
+  const liveBar = document.getElementById('liveActivityBar');
+  if (liveBar) liveBar.classList.add('hidden');
+
+  const createBtn = document.getElementById('createNewBtn');
+  if (createBtn) createBtn.classList.add('hidden');
+
+  const zipBtn = document.getElementById('downloadBundleBtn');
+  if (zipBtn) zipBtn.classList.add('hidden');
+
+  closeDetailModal();
+  redrawWires();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  showToast('Ready for a new task! Canvas completely cleared.', 'info');
 }

@@ -27,7 +27,7 @@
   <!-- Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <!-- Stylesheet -->
-  <link rel="stylesheet" href="styles.css?v=8.3">
+  <link rel="stylesheet" href="styles.css?v=9.0">
 </head>
 <body class="min-h-screen flex flex-col studio-canvas selection:bg-indigo-100 selection:text-indigo-900">
 
@@ -222,13 +222,12 @@
           </div>
         </div>
 
-        <!-- LEVEL 4: 6 PLATFORM DISTRIBUTION NODES (SITTING LIKE EARLIER) -->
+        <!-- LEVEL 4: 6 PLATFORM DISTRIBUTION NODES -->
         <div class="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
           
           <!-- Node 1: LinkedIn -->
           <div id="node_linkedin" onclick="openDetailModal('linkedin')" class="workflow-node state-idle p-3.5 flex flex-col justify-between h-[155px]">
             <div class="port-top"></div>
-            <div class="port-bottom"></div>
             <div>
               <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center space-x-1.5">
@@ -247,7 +246,6 @@
           <!-- Node 2: Twitter / X -->
           <div id="node_twitter" onclick="openDetailModal('twitter')" class="workflow-node state-idle p-3.5 flex flex-col justify-between h-[155px]">
             <div class="port-top"></div>
-            <div class="port-bottom"></div>
             <div>
               <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center space-x-1.5">
@@ -266,7 +264,6 @@
           <!-- Node 3: WhatsApp -->
           <div id="node_whatsapp" onclick="openDetailModal('whatsapp')" class="workflow-node state-idle p-3.5 flex flex-col justify-between h-[155px]">
             <div class="port-top"></div>
-            <div class="port-bottom"></div>
             <div>
               <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center space-x-1.5">
@@ -285,7 +282,6 @@
           <!-- Node 4: Newsletter -->
           <div id="node_newsletter" onclick="openDetailModal('newsletter')" class="workflow-node state-idle p-3.5 flex flex-col justify-between h-[155px]">
             <div class="port-top"></div>
-            <div class="port-bottom"></div>
             <div>
               <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center space-x-1.5">
@@ -304,7 +300,6 @@
           <!-- Node 5: Facebook -->
           <div id="node_facebook" onclick="openDetailModal('facebook')" class="workflow-node state-idle p-3.5 flex flex-col justify-between h-[155px]">
             <div class="port-top"></div>
-            <div class="port-bottom"></div>
             <div>
               <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center space-x-1.5">
@@ -323,7 +318,6 @@
           <!-- Node 6: Instagram -->
           <div id="node_instagram" onclick="openDetailModal('instagram')" class="workflow-node state-idle p-3.5 flex flex-col justify-between h-[155px]">
             <div class="port-top"></div>
-            <div class="port-bottom"></div>
             <div>
               <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center space-x-1.5">
@@ -332,51 +326,10 @@
                 </div>
                 <span id="status_pill_instagram" class="px-1.5 py-0.5 text-[9px] font-bold rounded bg-slate-100 dark:bg-gray-800 text-slate-500">⚪ Idle</span>
               </div>
-              <p id="snippet_instagram" class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-3 leading-snug">Caption & 5-slide carousel.</p>
+              <p id="snippet_instagram" class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-3 leading-snug">Engaging Instagram caption & hashtags.</p>
             </div>
             <div class="pt-2 border-t border-slate-100 dark:border-gray-800 text-[10px] text-pink-600 font-semibold flex justify-end">
               <span class="hover:underline">Inspect →</span>
-            </div>
-          </div>
-
-        </div>
-
-        <!-- LEVEL 5: AI MEDIA & CREATIVE STUDIO LAYER (SEPARATELY UNDER PLATFORM NODES) -->
-        <div class="w-full max-w-2xl grid grid-cols-1 sm:grid-cols-2 gap-4">
-          
-          <!-- Node 7: AI Images Studio (SEPARATE TIER) -->
-          <div id="node_images" onclick="openDetailModal('images')" class="workflow-node state-idle p-4 flex flex-col justify-between h-[155px]">
-            <div class="port-top"></div>
-            <div>
-              <div class="flex items-center justify-between mb-2">
-                <div class="flex items-center space-x-2">
-                  <span class="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xs shadow-sm"><i class="fa-solid fa-images"></i></span>
-                  <span class="text-xs font-bold text-slate-900 dark:text-white truncate">AI Images Studio</span>
-                </div>
-                <span id="status_pill_images" class="px-1.5 py-0.5 text-[9px] font-bold rounded bg-slate-100 dark:bg-gray-800 text-slate-500">⚪ Idle</span>
-              </div>
-              <p id="snippet_images" class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-3 leading-snug">Directive-driven visual asset suite.</p>
-            </div>
-            <div class="pt-2 border-t border-slate-100 dark:border-gray-800 text-[10px] text-amber-600 font-semibold flex justify-end">
-              <span class="hover:underline">Inspect Gallery →</span>
-            </div>
-          </div>
-
-          <!-- Node 8: AI Video Studio (SEPARATE TIER) -->
-          <div id="node_video" onclick="openDetailModal('video')" class="workflow-node state-idle p-4 flex flex-col justify-between h-[155px]">
-            <div class="port-top"></div>
-            <div>
-              <div class="flex items-center justify-between mb-2">
-                <div class="flex items-center space-x-2">
-                  <span class="w-7 h-7 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center text-xs shadow-sm"><i class="fa-solid fa-film"></i></span>
-                  <span class="text-xs font-bold text-slate-900 dark:text-white truncate">AI Video Studio</span>
-                </div>
-                <span id="status_pill_video" class="px-1.5 py-0.5 text-[9px] font-bold rounded bg-slate-100 dark:bg-gray-800 text-slate-500">⚪ Idle</span>
-              </div>
-              <p id="snippet_video" class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-3 leading-snug">20s dynamic vertical MP4 render.</p>
-            </div>
-            <div class="pt-2 border-t border-slate-100 dark:border-gray-800 text-[10px] text-rose-600 font-semibold flex justify-end">
-              <span class="hover:underline">Watch Video →</span>
             </div>
           </div>
 
@@ -494,6 +447,6 @@
   <div id="toastContainer" class="fixed bottom-6 right-6 z-50 space-y-2 pointer-events-none"></div>
 
   <!-- APPLICATION SCRIPT -->
-  <script src="app.js?v=8.3"></script>
+  <script src="app.js?v=9.0"></script>
 </body>
 </html>

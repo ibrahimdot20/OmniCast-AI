@@ -128,9 +128,7 @@ class MasterOrchestrator:
 * 💬 **WhatsApp:** {plan.platform_angles.get('whatsapp', 'Urgent, high-value direct community broadcast')}
 * 📧 **Newsletter:** {plan.platform_angles.get('newsletter', 'Deep-dive editorial essay with frameworks')}
 * 👥 **Facebook:** {plan.platform_angles.get('facebook', 'Community story & interactive discussion')}
-* 📸 **Instagram:** {plan.platform_angles.get('instagram', 'Visual 5-slide carousel breakdown')}
-* 🖼️ **Images:** Custom visual asset suite aligned with user directives
-* 🎬 **Video:** 20-second dynamic vertical video storyboard & MP4 render
+* 📸 **Instagram:** {plan.platform_angles.get('instagram', 'Scroll-stopping caption & hashtags')}
 """
 
         plan_card = PlatformCard(
@@ -319,93 +317,23 @@ Write an authentic, story-driven Facebook post (250-350 words) that connects emo
         yield self._sse_event("status", {
             "stage": "generating_instagram",
             "node": "node_instagram",
-            "message": "📸 Instagram Visualist designing carousel storyboard & caption...",
-            "agent": "InstagramVisualist"
+            "message": "📸 Instagram Caption Specialist writing viral caption & hashtags...",
+            "agent": "InstagramSpecialist"
         })
         ig_raw = call_gemini(
             f"""{base_context}
 
 TASK:
-Create a complete 5-Slide Visual Carousel Storyboard (detailed visual cues & slide copy for Slides 1-5) AND a full 200+ word structured caption with 15-20 relevant hashtags, tailored directly to the user's directives.""",
+Write an engaging, high-retention Instagram Caption with a scroll-stopping hook opening line, valuable story/insight paragraphs with clean spacing and emojis, a clear call-to-action (CTA), and 15-20 targeted hashtags. Focus STRICTLY on writing an amazing Instagram caption. Do NOT create carousel slide breakdowns.""",
             system_instruction=INSTAGRAM_SYSTEM_PROMPT
         )
         ig_card = PlatformCard(
             id=f"card_instagram_{campaign_id}",
             platform="instagram",
-            title="Instagram Carousel",
+            title="Instagram Caption",
             content=ig_raw.strip()
         )
         yield self._sse_event("card", ig_card.model_dump())
-        await asyncio.sleep(0.3)
-
-        # 7. Images Studio Node (Directive-Driven)
-        yield self._sse_event("status", {
-            "stage": "generating_images",
-            "node": "node_images",
-            "message": "🖼️ AI Images Studio generating bespoke graphic suite according to user directives...",
-            "agent": "ImagesStudio"
-        })
-        try:
-            images_list = generate_campaign_images(req.prompt, research.topic, plan.core_thesis)
-        except Exception as e:
-            logger.warning(f"Images generation note: {e}")
-            images_list = []
-
-        images_md = f"### 🖼️ AI Image Studio Suite ({len(images_list)} Assets Generated)\n\n"
-        for img in images_list:
-            images_md += f"#### ✦ {img['title']} ({img['aspect_ratio']})\n"
-            images_md += f"![{img['title']}]({img['url']})\n\n"
-            images_md += f"*Theme:* {img['theme']}\n\n---\n\n"
-
-        images_card = PlatformCard(
-            id=f"card_images_{campaign_id}",
-            platform="images",
-            title=f"AI Images Studio ({len(images_list)} Assets)",
-            content=images_md.strip(),
-            metadata={"images": images_list, "count": len(images_list)}
-        )
-        yield self._sse_event("card", images_card.model_dump())
-        await asyncio.sleep(0.3)
-
-        # 8. Video Studio Node (Directive-Driven)
-        yield self._sse_event("status", {
-            "stage": "generating_video",
-            "node": "node_video",
-            "message": "🎬 AI Video Studio rendering 20-second dynamic vertical MP4 video...",
-            "agent": "VideoStudio"
-        })
-        try:
-            video_data = generate_campaign_video(req.prompt, research.topic, plan.core_thesis, research.core_facts)
-        except Exception as e:
-            logger.warning(f"Video generation note: {e}")
-            video_data = {"video_url": "", "duration_seconds": 20, "scenes": [], "script": "Dynamic Video Render"}
-
-        video_md = f"""### 🎬 AI Video Studio (20-Second Dynamic MP4)
-
-<video controls class="w-full rounded-xl shadow-lg border border-slate-200 dark:border-gray-700 max-h-[400px] bg-black">
-  <source src="{video_data['video_url']}" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
-
----
-
-### 📋 4-Scene Storyboard Architecture
-* **Scene 1 (0-5s):** {video_data.get('scenes', ['Scene 1'])[0] if video_data.get('scenes') else 'Hook'}
-* **Scene 2 (5-10s):** {video_data.get('scenes', ['Scene 2'])[1] if len(video_data.get('scenes', [])) > 1 else 'Challenge'}
-* **Scene 3 (10-15s):** {video_data.get('scenes', ['Scene 3'])[2] if len(video_data.get('scenes', [])) > 2 else 'Blueprint'}
-* **Scene 4 (15-20s):** {video_data.get('scenes', ['Scene 4'])[3] if len(video_data.get('scenes', [])) > 3 else 'Action'}
-
-**Direct Video Download URL:** [{video_data['video_url']}]({video_data['video_url']})
-"""
-
-        video_card = PlatformCard(
-            id=f"card_video_{campaign_id}",
-            platform="video",
-            title="AI Video Studio (20s MP4)",
-            content=video_md.strip(),
-            metadata=video_data
-        )
-        yield self._sse_event("card", video_card.model_dump())
         await asyncio.sleep(0.3)
 
         # ----------------------------------------------------
@@ -416,7 +344,7 @@ Create a complete 5-Slide Visual Carousel Storyboard (detailed visual cues & sli
             hook_strength=9.9,
             retention_estimate="High (>91% 60s completion)",
             clarity_score=9.9,
-            recommendation="Masterclass multi-platform execution. 100% directive-driven text, image & video assets ready for distribution."
+            recommendation="Masterclass multi-platform execution. 100% directive-driven content ready for immediate distribution."
         )
         
         yield self._sse_event("virality", scorecard.model_dump())
@@ -424,7 +352,7 @@ Create a complete 5-Slide Visual Carousel Storyboard (detailed visual cues & sli
         yield self._sse_event("complete", {
             "campaign_id": campaign_id,
             "created_at": created_at,
-            "message": "✨ OmniCast AI Studio Swarm has completed all 11 workflow nodes (Text + Images + Video)!"
+            "message": "✨ OmniCast AI Studio Swarm has completed all 9 workflow nodes!"
         })
 
     def _sse_event(self, event_type: str, data: Dict[str, Any]) -> str:

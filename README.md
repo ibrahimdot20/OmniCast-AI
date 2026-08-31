@@ -7,9 +7,9 @@
 
 ## 🌟 Executive Summary
 
-Creating high-performing digital campaigns today requires hours of fragmented effort across multiple platforms and tools. Creators and marketing teams must research trending topics, formulate platform-specific strategies, calibrate tone, write custom video storyboards, format LinkedIn posts, craft Twitter threads, draft WhatsApp announcements, format newsletters, design visual carousels, generate image assets, and render promotional videos.
+Creating high-performing digital campaigns today requires hours of fragmented effort across multiple platforms and tools. Creators and marketing teams must research trending topics, formulate platform-specific strategies, calibrate tone, format LinkedIn posts, craft Twitter threads, draft WhatsApp announcements, format newsletters, design Facebook narratives, and craft engaging Instagram captions.
 
-**OmniCast AI** automates this entire production pipeline. With a **single prompt, target guideline, or URL**, an autonomous multi-agent swarm performs live internet research, constructs a unified campaign narrative, calibrates platform-fitting rules, generates tailored content for 6 major platforms, and renders directive-driven **AI Images** and **20-second dynamic MP4 video assets** on an interactive visual workflow canvas.
+**OmniCast AI** automates this entire production pipeline. With a **single prompt, target guideline, or URL**, an autonomous multi-agent swarm performs live internet research, constructs a unified campaign narrative, calibrates platform-fitting rules, and progressively generates tailored, publication-ready content for 6 major platforms on an interactive visual workflow canvas.
 
 ---
 
@@ -20,7 +20,7 @@ You can access the live production instance here:
 
 ---
 
-## 🏛️ System Architecture (11-Node Swarm)
+## 🏛️ System Architecture (9-Node Swarm)
 
 ```mermaid
 graph TD
@@ -28,7 +28,7 @@ graph TD
     WebStudio --> API["FastAPI Agent Gateway"]
     API --> MasterOrchestrator["Antigravity Swarm Orchestrator (Gemini 3.7 Flash)"]
     
-    subgraph Autonomous 5-Tier Pipeline
+    subgraph Autonomous 4-Tier Pipeline
         MasterOrchestrator --> Level1["Level 1: Deep Research Agent<br/>• Live Web Search & Fact Extraction<br/>• Audience Sentiment & 3 Viral Angles"]
         
         Level1 --> Level2["Level 2: Strategic Campaign Planner<br/>• Maps thesis to multi-channel angles<br/>• Autonomous tone & audience calibration"]
@@ -41,14 +41,10 @@ graph TD
         Level4 --> P3["💬 WhatsApp Broadcast Specialist"]
         Level4 --> P4["📧 Editorial Newsletter Writer"]
         Level4 --> P5["👥 Facebook Community Engine"]
-        Level4 --> P6["📸 Instagram Carousel Visualist"]
-        
-        Level4 --> Level5["Level 5: AI Media & Creative Studio Tier"]
-        Level5 --> M1["🖼️ AI Images Studio<br/>• Directive-driven prompt parsing (1-6 images)<br/>• Generates High-Res Marketing Assets"]
-        Level5 --> M2["🎬 AI Video Studio<br/>• 20-Second Dynamic Vertical MP4<br/>• 4 Scene Storyboard Transitions"]
+        Level4 --> P6["📸 Instagram Caption Specialist"]
     end
     
-    P1 & P2 & P3 & P4 & P5 & P6 & M1 & M2 --> EventStream["SSE Live Stream (Sequential SVG Direct Wiring)"]
+    P1 & P2 & P3 & P4 & P5 & P6 --> EventStream["SSE Live Stream (Sequential SVG Direct Wiring)"]
     EventStream --> WebStudio
     
     subgraph Isolated 1-Click Refinement Loop
@@ -74,24 +70,20 @@ graph TD
 
 ### 4. ✍️ Native Channel Distribution (6 Platforms)
 * 💼 **LinkedIn:** Executive takeaways, clean spacing, bulleted structure, 3-5 targeted hashtags.
-* 🐦 **X (Twitter):** 280-char strict constraints, curiosity hook, 5-tweet thread.
+* 🐦 **X (Twitter):** 280-char strict constraints, curiosity hook, 6-7 tweet thread.
 * 💬 **WhatsApp:** Native WhatsApp Markdown (`*bold*`, `_italics_`, bullet points, emojis).
 * 📧 **Email Newsletter:** 3 Subject line variations, preview snippet, structured body with H2 headings, and sign-off.
 * 👥 **Facebook:** Community-centric conversational narrative.
-* 📸 **Instagram:** Hook opening line, 5-slide carousel outline, 15 hashtags.
+* 📸 **Instagram:** Scroll-stopping hook line, valuable formatted story body, conversation CTA, and 15-20 targeted hashtags.
 
-### 5. 🎨 AI Media Studio (Images & Video Tier)
-* 🖼️ **AI Images Studio:** Directive-driven prompt parser detects exact user image requests (e.g. "Create 4 promotional posters") and generates 1-6 high-resolution assets with 1-click downloads.
-* 🎬 **AI Video Studio:** Renders 20-second vertical MP4 videos with 4 dynamic scene transitions, storyboard subtitles, and instant MP4 downloads.
-
-### 6. 🎛️ Interactive Canvas & Node Controls
+### 5. 🎛️ Interactive Canvas & Node Controls
 * 📋 **1-Click Copy:** Instant clipboard copy with visual confirmation.
 * 💾 **Direct Download:** Download individual posts as `.txt` or `.md`.
 * ✏️ **Inline Editing:** Edit text directly in the modal dialog and save.
 * 🔄 **1-Click Autonomous Re-Roll:** Spins up an isolated sub-agent to explore alternative high-retention angles.
 * 📜 **Campaign History Drawer:** Auto-saves past campaigns to local storage with restore and delete options.
-* 🆕 **Fresh Start ("Create New"):** 1-click clean canvas reset.
-* 📦 **1-Click Production Bundle (ZIP):** Packages all generated content, scripts, images, and video into a single archive.
+* 🆕 **Fresh Start ("Create New"):** 1-click clean canvas reset with zero residual state.
+* 📦 **1-Click Production Bundle (ZIP):** Packages all generated content, scripts, and markdown files into a single archive.
 
 ---
 
